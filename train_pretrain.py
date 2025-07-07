@@ -8,53 +8,61 @@ from utils import (
     save_ckpt
 )
 import logging
-from torch_geometric.utils import negative_sampling
 from models import create_model
 from datasets import load_dataset
+from torch_geometric.data import Data
 
 
-class EdgePredictor(nn.Module):
-    def __init__(self, hidden_dim):
+class ProjectionHead(nn.Module):
+    def __init__(self, input_dim, hidden_dim):
         super().__init__()
-        self.scorer = nn.Sequential(
-            nn.Linear(2 * hidden_dim, hidden_dim),
+        self.proj = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_dim, 1)
+            nn.Linear(hidden_dim, hidden_dim)
         )
 
-    def forward(self, h, edge_index):
-        src, dst = edge_index
-        edge_feat = torch.cat([h[src], h[dst]], dim=1)
-        return self.scorer(edge_feat).squeeze()
+    def forward(self, x):
+        return self.proj(x)
 
 
-def train_edge_prediction(encoder, predictor, data, optimizer, device):
-    encoder.train()
-    predictor.train()
-    data = data.to(device)
+def graph_views(data: Data, aug: str = 'dropN', aug_ratio: float = 0.2):
+    x, edge_index = data.x.clone(), data.edge_index.clone()
 
-    optimizer.zero_grad()
-    h = encoder(data.x, data.edge_index)
+    if aug == 'dropN':  # node feature masking (drop node features)
+        mask = torch.rand(x.size(0), device=x.device) > aug_ratio
+        x = x * mask.unsqueeze(1).float()
 
-    pos_edge = data.edge_index
-    neg_edge = negative_sampling(
-        edge_index=pos_edge, num_nodes=data.num_nodes,
-        num_neg_samples=pos_edge.size(1)
-    )
+    elif aug == 'permE':  # edge permutation (randomly drop edges)
+        num_edges = edge_index.size(1)
+        keep = torch.rand(num_edges, device=edge_index.device) > aug_ratio
+        edge_index = edge_index[:, keep]
 
-    pos_pred = predictor(h, pos_edge)
-    neg_pred = predictor(h, neg_edge)
+    elif aug == 'maskN':  # feature masking (random noise)
+        noise = torch.randn_like(x) * aug_ratio
+        x = x + noise
 
-    pos_labels = torch.ones(pos_pred.size(), device=device)
-    neg_labels = torch.zeros(neg_pred.size(), device=device)
+    elif aug == 'dropE':  # explicitly drop edges without permuting
+        num_edges = edge_index.size(1)
+        drop = torch.rand(num_edges, device=edge_index.device) < aug_ratio
+        edge_index = edge_index[:, ~drop]
 
-    loss = F.binary_cross_entropy_with_logits(
-        torch.cat([pos_pred, neg_pred]),
-        torch.cat([pos_labels, neg_labels])
-    )
-    loss.backward()
-    optimizer.step()
-    return loss.item()
+    elif aug == 'maskF':  # hard masking of random features
+        mask = torch.rand_like(x) > aug_ratio
+        x = x * mask
+
+    return Data(x=x, edge_index=edge_index)
+
+
+def info_nce_loss(z1, z2, temperature=0.5):
+    z1 = F.normalize(z1, dim=1)
+    z2 = F.normalize(z2, dim=1)
+    sim_matrix = torch.mm(z1, z2.t())
+    positives = torch.diag(sim_matrix)
+    numerator = torch.exp(positives / temperature)
+    denominator = torch.sum(torch.exp(sim_matrix / temperature), dim=1)
+    loss = -torch.log(numerator / denominator)
+    return loss.mean()
 
 
 def main():
@@ -67,37 +75,57 @@ def main():
     # Dataset
     logging.info(f"Loading dataset: {config['dataset']['name']}")
     dataset_info, train_loader, _, _ = load_dataset(config['dataset']['name'])
-    data = next(iter(train_loader))
+    data = next(iter(train_loader)).to(device)
 
-    # Model
+    # Model + Projection Head
     encoder = create_model(
-        model_type='gin',
+        model_type=config['model']['type'],
         input_dim=dataset_info['num_features'],
         hidden_dim=config['model']['hidden_dim'],
         num_layers=config['model']['num_layers'],
         dropout=config['model']['dropout']
     ).to(device)
-    predictor = EdgePredictor(hidden_dim=config['model']['hidden_dim']).to(device)
+
+    projector = ProjectionHead(
+        input_dim=config['model']['hidden_dim'],
+        hidden_dim=config['model']['hidden_dim']
+    ).to(device)
 
     optimizer = torch.optim.Adam(
-        list(encoder.parameters()) + list(predictor.parameters()),
-        lr=config['training']['lr'],
-        weight_decay=config['training']['weight_decay']
+        list(encoder.parameters()) + list(projector.parameters()),
+        lr=config['pretrain']['lr'],
+        weight_decay=config['pretrain']['weight_decay']
     )
 
-    # Training loop
-    logging.info("Start edge prediction pretraining...")
-    for epoch in range(config['training']['epochs']):
-        loss = train_edge_prediction(encoder, predictor, data, optimizer, device)
-        logging.info(f"Epoch {epoch:03d} | Loss: {loss:.4f}")
+    aug1 = config['augmentation']['view1']
+    aug2 = config['augmentation']['view2']
+    aug_ratio = config['augmentation']['aug_ratio']
 
-        # Save every N epochs
-        # if epoch % config['training'].get('save_interval') == 0:
-        #     save_ckpt(encoder, optimizer, epoch, config, name=f"encoder_epoch_{epoch}", filepath=f"checkpoints/encoder_epoch_{epoch}.pt")
-            
-    # Final save
-    save_ckpt(encoder, optimizer, epoch, config, name="encoder_final", filepath="checkpoints/encoder_final.pt")
-    logging.info("Pretraining complete.")
+    logging.info("Start GCL-style contrastive pretraining...")
+    for epoch in range(config['pretrain']['epochs']):
+        encoder.train()
+        projector.train()
+
+        view1 = graph_views(data, aug=aug1, aug_ratio=aug_ratio)
+        view2 = graph_views(data, aug=aug2, aug_ratio=aug_ratio)
+
+        h1 = encoder(view1.x.to(device), view1.edge_index.to(device))
+        h2 = encoder(view2.x.to(device), view2.edge_index.to(device))
+
+        z1 = projector(h1)
+        z2 = projector(h2)
+
+        loss = info_nce_loss(z1, z2, temperature=0.5)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        logging.info(f"Epoch {epoch:03d} | Contrastive Loss: {loss:.4f}")
+
+    # Save final encoder
+    save_ckpt(encoder, optimizer, epoch, loss.item(), "checkpoints/encoder_final.pt")
+    logging.info("GCL Pretraining complete.")
 
 
 if __name__ == "__main__":

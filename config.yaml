@@ -1,18 +1,32 @@
-experiment:
-  seed: 42
-  device: auto
-
 dataset:
   name: cora
 
 model:
   type: gin
-  hidden_dim: 64
-  num_layers: 2
+  hidden_dim: 128
+  num_layers: 5
   dropout: 0.5
 
-training:
+pretrain:
   lr: 0.001
-  weight_decay: 0.0001
+  weight_decay: 0.0005
   epochs: 1000
-  save_interval: 100
+
+prompt_tuning:
+  lr: 0.01
+  weight_decay: 0.0005
+  epochs: 100
+
+prompt:
+  type: additive
+  num_prompts: 10
+
+experiment:
+  seed: 42
+  device: auto
+  log_level: INFO
+
+augmentation:
+  view1: dropN
+  view2: permE
+  aug_ratio: 0.2
