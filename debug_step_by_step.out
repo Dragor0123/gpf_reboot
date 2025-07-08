@@ -1,0 +1,141 @@
+🚨 COMPREHENSIVE DEBUGGING SESSION
+Tracking CUDA Index Out of Bounds...
+
+================================================================================
+🔍 DEBUGGING PRE-TRAINING STEP
+================================================================================
+📝 Loaded config from: config.yaml
+🖥️  Using device: cuda
+Device: cuda
+Source dataset: cora
+Target dataset: computers
+
+🔍 Loading source dataset...
+WARNING:root:⚠️  Dimension mismatch: expected 1433, got 767
+✅ Source data loaded successfully
+🔍 Source features:
+   Shape: torch.Size([2708, 100])
+   Device: cuda:0
+   Dtype: torch.float32
+   Range: [-0.2717, 0.7457]
+   Has NaN: False
+   Has Inf: False
+🔍 Source edge_index:
+   Shape: torch.Size([2, 10556])
+   Device: cuda:0
+   Dtype: torch.int64
+   Range: [0.0000, 2707.0000]
+   Has NaN: False
+   Has Inf: False
+🔍 Source edge validation:
+   Num nodes: 2708
+   Edge range: [0, 2707]
+   Valid: True
+
+🔍 Testing model creation...
+✅ Model created successfully
+
+🔍 Testing forward pass...
+🔍 Encoder output:
+   Shape: torch.Size([2708, 128])
+   Device: cuda:0
+   Dtype: torch.float32
+   Range: [0.0000, 51.0555]
+   Has NaN: False
+   Has Inf: False
+✅ Forward pass successful
+
+================================================================================
+🔍 DEBUGGING PROMPT TUNING STEP
+================================================================================
+📝 Loaded config from: config.yaml
+🖥️  Using device: cuda
+
+🔍 Loading target dataset...
+WARNING:root:⚠️  Dimension mismatch: expected 1433, got 767
+✅ Target data loaded successfully
+🔍 Target features:
+   Shape: torch.Size([13752, 100])
+   Device: cuda:0
+   Dtype: torch.float32
+   Range: [-0.0341, 0.0391]
+   Has NaN: False
+   Has Inf: False
+🔍 Target edge_index:
+   Shape: torch.Size([2, 491722])
+   Device: cuda:0
+   Dtype: torch.int64
+   Range: [0.0000, 13751.0000]
+   Has NaN: False
+   Has Inf: False
+🔍 Target edge validation:
+   Num nodes: 13752
+   Edge range: [0, 13751]
+   Valid: True
+🔍 Loading encoder from: checkpoints/cora_encoder_final.pt
+✅ Encoder loaded successfully
+
+🔍 Creating prompt...
+✅ Prompt created successfully
+✅ Classifier created successfully
+
+🔍 Step-by-step forward pass...
+Step 1: Applying prompt...
+🔍 Input features:
+   Shape: torch.Size([13752, 100])
+   Device: cuda:0
+   Dtype: torch.float32
+   Range: [-0.0341, 0.0391]
+   Has NaN: False
+   Has Inf: False
+🔍 Prompted features:
+   Shape: torch.Size([13752, 100])
+   Device: cuda:0
+   Dtype: torch.float32
+   Range: [-0.1390, 0.1026]
+   Has NaN: False
+   Has Inf: False
+✅ Prompt applied successfully
+Step 2: Encoder forward...
+🔍 Encoder input:
+   Shape: torch.Size([13752, 100])
+   Device: cuda:0
+   Dtype: torch.float32
+   Range: [-0.1390, 0.1026]
+   Has NaN: False
+   Has Inf: False
+🔍 Edge index:
+   Shape: torch.Size([2, 491722])
+   Device: cuda:0
+   Dtype: torch.int64
+   Range: [0.0000, 13751.0000]
+   Has NaN: False
+   Has Inf: False
+🔍 Encoder output:
+   Shape: torch.Size([13752, 128])
+   Device: cuda:0
+   Dtype: torch.float32
+   Range: [0.0000, 19804694.0000]
+   Has NaN: False
+   Has Inf: False
+✅ Encoder forward successful
+Step 3: Classifier forward...
+🔍 Classifier output:
+   Shape: torch.Size([13752, 10])
+   Device: cuda:0
+   Dtype: torch.float32
+   Range: [-1123968.6250, 6218527.0000]
+   Has NaN: False
+   Has Inf: False
+✅ Classifier forward successful
+
+✅ All forward pass steps completed successfully!
+
+🔍 Testing Target-Centric initialization...
+✅ Target-Centric initialized successfully
+
+================================================================================
+📋 DEBUGGING SUMMARY
+================================================================================
+Pre-training step: ✅ OK
+Prompt tuning step: ✅ OK

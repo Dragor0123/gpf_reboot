@@ -1,0 +1,586 @@
+config: &id001
+  dataset:
+    data_loading:
+      cache_datasets: true
+    name: cora
+    split:
+      shuffle: true
+      test_ratio: 0.2
+      val_ratio: 0.1
+  evaluation:
+    metrics:
+    - accuracy
+    - f1_macro
+    - f1_micro
+    results_dir: results
+    save_results: true
+  experiment:
+    device: auto
+    log_level: INFO
+    run_name: photo_to_citeseer_baseline_20250708_014421
+    seed: 42
+    source_dataset: photo
+    target_dataset: citeseer
+    type: cross_domain
+  model:
+    dropout: 0.5
+    hidden_dim: 128
+    num_layers: 5
+    type: gin
+  pretrain:
+    augmentation:
+      aug_ratio: 0.2
+      temperature: 0.5
+      view1: dropN
+      view2: permE
+    epochs: 1000
+    lr: 0.001
+    weight_decay: 0.0005
+  prompt:
+    num_prompts: 10
+    type: gpf_plus
+  prompt_tuning:
+    early_stopping:
+      enable: true
+      min_delta: 0.001
+      patience: 20
+    epochs: 100
+    lr: 0.01
+    weight_decay: 0.0005
+  reproducibility:
+    benchmark: false
+    deterministic: true
+  target_centric:
+    enable: false
+    regularization:
+      anchor:
+        num_anchors: 500
+        type: random
+      beta: 0.0
+      divergence:
+        params:
+          sigma: 1.0
+        type: mmd
+      mapper:
+        type: encoder
+      type: mmd
+results:
+  best_val_score: 0.28313253012048195
+  config: *id001
+  dataset: citeseer
+  experiment_type: cross_domain
+  target_centric_enabled: false
+  test_metrics:
+    accuracy: 0.3082706766917293
+    auroc: !!python/object/apply:numpy.core.multiarray.scalar
+    - &id002 !!python/object/apply:numpy.dtype
+      args:
+      - f8
+      - false
+      - true
+      state: !!python/tuple
+      - 3
+      - <
+      - null
+      - null
+      - null
+      - -1
+      - -1
+      - 0
+    - !!binary |
+      l+AwkcMS5D8=
+    f1_macro: 0.1913790657926475
+    f1_micro: 0.3082706766917293
+  training_history:
+    epoch_details: []
+    train_losses:
+    - epoch: 0
+      reg_loss: 0.0
+      task_loss: 1.8071538209915161
+      total_loss: 1.8071538209915161
+    - epoch: 1
+      reg_loss: 0.0
+      task_loss: 1.7792255878448486
+      total_loss: 1.7792255878448486
+    - epoch: 2
+      reg_loss: 0.0
+      task_loss: 1.765670657157898
+      total_loss: 1.765670657157898
+    - epoch: 3
+      reg_loss: 0.0
+      task_loss: 1.7579295635223389
+      total_loss: 1.7579295635223389
+    - epoch: 4
+      reg_loss: 0.0
+      task_loss: 1.7539217472076416
+      total_loss: 1.7539217472076416
+    - epoch: 5
+      reg_loss: 0.0
+      task_loss: 1.7526453733444214
+      total_loss: 1.7526453733444214
+    - epoch: 6
+      reg_loss: 0.0
+      task_loss: 1.7527965307235718
+      total_loss: 1.7527965307235718
+    - epoch: 7
+      reg_loss: 0.0
+      task_loss: 1.7530936002731323
+      total_loss: 1.7530936002731323
+    - epoch: 8
+      reg_loss: 0.0
+      task_loss: 1.7524840831756592
+      total_loss: 1.7524840831756592
+    - epoch: 9
+      reg_loss: 0.0
+      task_loss: 1.7504721879959106
+      total_loss: 1.7504721879959106
+    - epoch: 10
+      reg_loss: 0.0
+      task_loss: 1.7471383810043335
+      total_loss: 1.7471383810043335
+    - epoch: 11
+      reg_loss: 0.0
+      task_loss: 1.743654489517212
+      total_loss: 1.743654489517212
+    - epoch: 12
+      reg_loss: 0.0
+      task_loss: 1.7393958568572998
+      total_loss: 1.7393958568572998
+    - epoch: 13
+      reg_loss: 0.0
+      task_loss: 1.735234260559082
+      total_loss: 1.735234260559082
+    - epoch: 14
+      reg_loss: 0.0
+      task_loss: 1.7316464185714722
+      total_loss: 1.7316464185714722
+    - epoch: 15
+      reg_loss: 0.0
+      task_loss: 1.72807776927948
+      total_loss: 1.72807776927948
+    - epoch: 16
+      reg_loss: 0.0
+      task_loss: 1.7253340482711792
+      total_loss: 1.7253340482711792
+    - epoch: 17
+      reg_loss: 0.0
+      task_loss: 1.7234340906143188
+      total_loss: 1.7234340906143188
+    - epoch: 18
+      reg_loss: 0.0
+      task_loss: 1.721509575843811
+      total_loss: 1.721509575843811
+    - epoch: 19
+      reg_loss: 0.0
+      task_loss: 1.7197948694229126
+      total_loss: 1.7197948694229126
+    - epoch: 20
+      reg_loss: 0.0
+      task_loss: 1.7187764644622803
+      total_loss: 1.7187764644622803
+    - epoch: 21
+      reg_loss: 0.0
+      task_loss: 1.7175291776657104
+      total_loss: 1.7175291776657104
+    - epoch: 22
+      reg_loss: 0.0
+      task_loss: 1.7157180309295654
+      total_loss: 1.7157180309295654
+    - epoch: 23
+      reg_loss: 0.0
+      task_loss: 1.7137658596038818
+      total_loss: 1.7137658596038818
+    - epoch: 24
+      reg_loss: 0.0
+      task_loss: 1.711531162261963
+      total_loss: 1.711531162261963
+    - epoch: 25
+      reg_loss: 0.0
+      task_loss: 1.7094038724899292
+      total_loss: 1.7094038724899292
+    - epoch: 26
+      reg_loss: 0.0
+      task_loss: 1.707537293434143
+      total_loss: 1.707537293434143
+    - epoch: 27
+      reg_loss: 0.0
+      task_loss: 1.7056421041488647
+      total_loss: 1.7056421041488647
+    - epoch: 28
+      reg_loss: 0.0
+      task_loss: 1.7047057151794434
+      total_loss: 1.7047057151794434
+    - epoch: 29
+      reg_loss: 0.0
+      task_loss: 1.7044652700424194
+      total_loss: 1.7044652700424194
+    - epoch: 30
+      reg_loss: 0.0
+      task_loss: 1.7021600008010864
+      total_loss: 1.7021600008010864
+    - epoch: 31
+      reg_loss: 0.0
+      task_loss: 1.7030960321426392
+      total_loss: 1.7030960321426392
+    - epoch: 32
+      reg_loss: 0.0
+      task_loss: 1.7036553621292114
+      total_loss: 1.7036553621292114
+    - epoch: 33
+      reg_loss: 0.0
+      task_loss: 1.7042040824890137
+      total_loss: 1.7042040824890137
+    - epoch: 34
+      reg_loss: 0.0
+      task_loss: 1.7010831832885742
+      total_loss: 1.7010831832885742
+    - epoch: 35
+      reg_loss: 0.0
+      task_loss: 1.6990432739257812
+      total_loss: 1.6990432739257812
+    - epoch: 36
+      reg_loss: 0.0
+      task_loss: 1.6967812776565552
+      total_loss: 1.6967812776565552
+    - epoch: 37
+      reg_loss: 0.0
+      task_loss: 1.694785714149475
+      total_loss: 1.694785714149475
+    - epoch: 38
+      reg_loss: 0.0
+      task_loss: 1.6942992210388184
+      total_loss: 1.6942992210388184
+    - epoch: 39
+      reg_loss: 0.0
+      task_loss: 1.6931660175323486
+      total_loss: 1.6931660175323486
+    - epoch: 40
+      reg_loss: 0.0
+      task_loss: 1.6920828819274902
+      total_loss: 1.6920828819274902
+    - epoch: 41
+      reg_loss: 0.0
+      task_loss: 1.6906938552856445
+      total_loss: 1.6906938552856445
+    - epoch: 42
+      reg_loss: 0.0
+      task_loss: 1.689773440361023
+      total_loss: 1.689773440361023
+    - epoch: 43
+      reg_loss: 0.0
+      task_loss: 1.6890071630477905
+      total_loss: 1.6890071630477905
+    - epoch: 44
+      reg_loss: 0.0
+      task_loss: 1.6886967420578003
+      total_loss: 1.6886967420578003
+    - epoch: 45
+      reg_loss: 0.0
+      task_loss: 1.6872488260269165
+      total_loss: 1.6872488260269165
+    - epoch: 46
+      reg_loss: 0.0
+      task_loss: 1.6863452196121216
+      total_loss: 1.6863452196121216
+    - epoch: 47
+      reg_loss: 0.0
+      task_loss: 1.6858854293823242
+      total_loss: 1.6858854293823242
+    - epoch: 48
+      reg_loss: 0.0
+      task_loss: 1.6894309520721436
+      total_loss: 1.6894309520721436
+    - epoch: 49
+      reg_loss: 0.0
+      task_loss: 1.6839388608932495
+      total_loss: 1.6839388608932495
+    - epoch: 50
+      reg_loss: 0.0
+      task_loss: 1.687973141670227
+      total_loss: 1.687973141670227
+    - epoch: 51
+      reg_loss: 0.0
+      task_loss: 1.6871085166931152
+      total_loss: 1.6871085166931152
+    - epoch: 52
+      reg_loss: 0.0
+      task_loss: 1.6877464056015015
+      total_loss: 1.6877464056015015
+    - epoch: 53
+      reg_loss: 0.0
+      task_loss: 1.6836905479431152
+      total_loss: 1.6836905479431152
+    - epoch: 54
+      reg_loss: 0.0
+      task_loss: 1.6844345331192017
+      total_loss: 1.6844345331192017
+    - epoch: 55
+      reg_loss: 0.0
+      task_loss: 1.681258201599121
+      total_loss: 1.681258201599121
+    - epoch: 56
+      reg_loss: 0.0
+      task_loss: 1.6818633079528809
+      total_loss: 1.6818633079528809
+    - epoch: 57
+      reg_loss: 0.0
+      task_loss: 1.679423451423645
+      total_loss: 1.679423451423645
+    - epoch: 58
+      reg_loss: 0.0
+      task_loss: 1.679248571395874
+      total_loss: 1.679248571395874
+    - epoch: 59
+      reg_loss: 0.0
+      task_loss: 1.6781220436096191
+      total_loss: 1.6781220436096191
+    - epoch: 60
+      reg_loss: 0.0
+      task_loss: 1.6782656908035278
+      total_loss: 1.6782656908035278
+    - epoch: 61
+      reg_loss: 0.0
+      task_loss: 1.6765143871307373
+      total_loss: 1.6765143871307373
+    - epoch: 62
+      reg_loss: 0.0
+      task_loss: 1.6770544052124023
+      total_loss: 1.6770544052124023
+    - epoch: 63
+      reg_loss: 0.0
+      task_loss: 1.6757723093032837
+      total_loss: 1.6757723093032837
+    - epoch: 64
+      reg_loss: 0.0
+      task_loss: 1.6750506162643433
+      total_loss: 1.6750506162643433
+    - epoch: 65
+      reg_loss: 0.0
+      task_loss: 1.6741373538970947
+      total_loss: 1.6741373538970947
+    - epoch: 66
+      reg_loss: 0.0
+      task_loss: 1.6727229356765747
+      total_loss: 1.6727229356765747
+    - epoch: 67
+      reg_loss: 0.0
+      task_loss: 1.672471523284912
+      total_loss: 1.672471523284912
+    - epoch: 68
+      reg_loss: 0.0
+      task_loss: 1.6715087890625
+      total_loss: 1.6715087890625
+    - epoch: 69
+      reg_loss: 0.0
+      task_loss: 1.671167254447937
+      total_loss: 1.671167254447937
+    - epoch: 70
+      reg_loss: 0.0
+      task_loss: 1.6705609560012817
+      total_loss: 1.6705609560012817
+    - epoch: 71
+      reg_loss: 0.0
+      task_loss: 1.6699728965759277
+      total_loss: 1.6699728965759277
+    - epoch: 72
+      reg_loss: 0.0
+      task_loss: 1.669480562210083
+      total_loss: 1.669480562210083
+    - epoch: 73
+      reg_loss: 0.0
+      task_loss: 1.6688755750656128
+      total_loss: 1.6688755750656128
+    - epoch: 74
+      reg_loss: 0.0
+      task_loss: 1.6683763265609741
+      total_loss: 1.6683763265609741
+    - epoch: 75
+      reg_loss: 0.0
+      task_loss: 1.6678409576416016
+      total_loss: 1.6678409576416016
+    - epoch: 76
+      reg_loss: 0.0
+      task_loss: 1.6673334836959839
+      total_loss: 1.6673334836959839
+    - epoch: 77
+      reg_loss: 0.0
+      task_loss: 1.6668381690979004
+      total_loss: 1.6668381690979004
+    - epoch: 78
+      reg_loss: 0.0
+      task_loss: 1.6663830280303955
+      total_loss: 1.6663830280303955
+    - epoch: 79
+      reg_loss: 0.0
+      task_loss: 1.6657928228378296
+      total_loss: 1.6657928228378296
+    - epoch: 80
+      reg_loss: 0.0
+      task_loss: 1.6653183698654175
+      total_loss: 1.6653183698654175
+    - epoch: 81
+      reg_loss: 0.0
+      task_loss: 1.6649963855743408
+      total_loss: 1.6649963855743408
+    - epoch: 82
+      reg_loss: 0.0
+      task_loss: 1.664783239364624
+      total_loss: 1.664783239364624
+    - epoch: 83
+      reg_loss: 0.0
+      task_loss: 1.6642674207687378
+      total_loss: 1.6642674207687378
+    - epoch: 84
+      reg_loss: 0.0
+      task_loss: 1.6638318300247192
+      total_loss: 1.6638318300247192
+    - epoch: 85
+      reg_loss: 0.0
+      task_loss: 1.663534164428711
+      total_loss: 1.663534164428711
+    - epoch: 86
+      reg_loss: 0.0
+      task_loss: 1.6628226041793823
+      total_loss: 1.6628226041793823
+    - epoch: 87
+      reg_loss: 0.0
+      task_loss: 1.6625068187713623
+      total_loss: 1.6625068187713623
+    - epoch: 88
+      reg_loss: 0.0
+      task_loss: 1.6620677709579468
+      total_loss: 1.6620677709579468
+    - epoch: 89
+      reg_loss: 0.0
+      task_loss: 1.6618720293045044
+      total_loss: 1.6618720293045044
+    - epoch: 90
+      reg_loss: 0.0
+      task_loss: 1.6618214845657349
+      total_loss: 1.6618214845657349
+    - epoch: 91
+      reg_loss: 0.0
+      task_loss: 1.6619341373443604
+      total_loss: 1.6619341373443604
+    - epoch: 92
+      reg_loss: 0.0
+      task_loss: 1.6607156991958618
+      total_loss: 1.6607156991958618
+    - epoch: 93
+      reg_loss: 0.0
+      task_loss: 1.6609939336776733
+      total_loss: 1.6609939336776733
+    - epoch: 94
+      reg_loss: 0.0
+      task_loss: 1.6599541902542114
+      total_loss: 1.6599541902542114
+    - epoch: 95
+      reg_loss: 0.0
+      task_loss: 1.6597105264663696
+      total_loss: 1.6597105264663696
+    - epoch: 96
+      reg_loss: 0.0
+      task_loss: 1.6598825454711914
+      total_loss: 1.6598825454711914
+    - epoch: 97
+      reg_loss: 0.0
+      task_loss: 1.6590253114700317
+      total_loss: 1.6590253114700317
+    - epoch: 98
+      reg_loss: 0.0
+      task_loss: 1.6585904359817505
+      total_loss: 1.6585904359817505
+    - epoch: 99
+      reg_loss: 0.0
+      task_loss: 1.6584835052490234
+      total_loss: 1.6584835052490234
+    val_metrics:
+    - accuracy: 0.22289156626506024
+      auroc: !!python/object/apply:numpy.core.multiarray.scalar
+      - *id002
+      - !!binary |
+        kmHIcegI3z8=
+      epoch: 0
+      f1_macro: 0.06597814953909184
+      f1_micro: 0.22289156626506024
+    - accuracy: 0.2740963855421687
+      auroc: !!python/object/apply:numpy.core.multiarray.scalar
+      - *id002
+      - !!binary |
+        ghOoj8Q84j8=
+      epoch: 10
+      f1_macro: 0.1485056285173528
+      f1_micro: 0.2740963855421687
+    - accuracy: 0.2740963855421687
+      auroc: !!python/object/apply:numpy.core.multiarray.scalar
+      - *id002
+      - !!binary |
+        e99se4mc4j8=
+      epoch: 20
+      f1_macro: 0.1576166287148946
+      f1_micro: 0.2740963855421687
+    - accuracy: 0.2740963855421687
+      auroc: !!python/object/apply:numpy.core.multiarray.scalar
+      - *id002
+      - !!binary |
+        WlDsjqLt4j8=
+      epoch: 30
+      f1_macro: 0.16130956868776733
+      f1_micro: 0.2740963855421687
+    - accuracy: 0.2740963855421687
+      auroc: !!python/object/apply:numpy.core.multiarray.scalar
+      - *id002
+      - !!binary |
+        966lYlkK4z8=
+      epoch: 40
+      f1_macro: 0.1654098198161739
+      f1_micro: 0.2740963855421687
+    - accuracy: 0.27710843373493976
+      auroc: !!python/object/apply:numpy.core.multiarray.scalar
+      - *id002
+      - !!binary |
+        qpuZTXQ74z8=
+      epoch: 50
+      f1_macro: 0.16809725697340375
+      f1_micro: 0.27710843373493976
+    - accuracy: 0.2710843373493976
+      auroc: !!python/object/apply:numpy.core.multiarray.scalar
+      - *id002
+      - !!binary |
+        OpjiYzpG4z8=
+      epoch: 60
+      f1_macro: 0.16632899667382425
+      f1_micro: 0.2710843373493976
+    - accuracy: 0.2740963855421687
+      auroc: !!python/object/apply:numpy.core.multiarray.scalar
+      - *id002
+      - !!binary |
+        28/FPtRT4z8=
+      epoch: 70
+      f1_macro: 0.16666666666666666
+      f1_micro: 0.2740963855421687
+    - accuracy: 0.28313253012048195
+      auroc: !!python/object/apply:numpy.core.multiarray.scalar
+      - *id002
+      - !!binary |
+        kYMdwr904z8=
+      epoch: 80
+      f1_macro: 0.1770835678637097
+      f1_micro: 0.28313253012048195
+    - accuracy: 0.28012048192771083
+      auroc: !!python/object/apply:numpy.core.multiarray.scalar
+      - *id002
+      - !!binary |
+        a2wKQh2K4z8=
+      epoch: 90
+      f1_macro: 0.17177969173594113
+      f1_micro: 0.28012048192771083
+    - accuracy: 0.28012048192771083
+      auroc: !!python/object/apply:numpy.core.multiarray.scalar
+      - *id002
+      - !!binary |
+        4K/T2siv4z8=
+      epoch: 99
+      f1_macro: 0.1717574861587919
+      f1_micro: 0.28012048192771083
+timestamp: '2025-07-08T01:44:22.805474'

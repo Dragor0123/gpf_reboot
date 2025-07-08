@@ -1,32 +1,112 @@
-dataset:
-  name: cora
+# GPF Reboot - Target-Centric Prior Modeling Configuration with SVD
+# Datasets : ['cora', 'citeseer', 'pubmed', 'computers', 'photo']
+# Experiment Type & Cross-Domain Settings
+experiment:
+  type: "cross_domain"  # "single_domain" or "cross_domain"
+  source_dataset: "cora"
+  target_dataset: "computers"
+  seed: 42
+  device: auto
+  log_level: INFO
+  run_name: null  # auto-generated if null
 
+# Dataset Configuration
+dataset:
+  # For single_domain experiments
+  name: "cora"  # used when experiment.type == "single_domain"
+  
+  # Cross-domain split ratios
+  split:
+    val_ratio: 0.1
+    test_ratio: 0.2
+    shuffle: true
+  
+  # Data loading settings
+  data_loading:
+    cache_datasets: true  # cache loaded datasets
+
+# SVD Feature Reduction (NEW!)
+feature_reduction:
+  enable: true
+  method: "svd"  # currently only "svd" supported
+  target_dim: 100  # all datasets reduced to 100D
+  save_reducer: true  # save SVD parameters for reuse
+  explained_variance_threshold: 0.95  # minimum variance to preserve
+
+# Model Architecture
 model:
   type: gin
   hidden_dim: 128
   num_layers: 5
   dropout: 0.5
 
+# Pretraining (on source dataset with SVD)
 pretrain:
   lr: 0.001
   weight_decay: 0.0005
   epochs: 1000
+  
+  # Contrastive learning settings
+  augmentation:
+    view1: dropN
+    view2: permE
+    aug_ratio: 0.2
+    temperature: 0.5
 
+# Prompt Tuning (on target dataset with SVD alignment)
 prompt_tuning:
   lr: 0.01
   weight_decay: 0.0005
-  epochs: 100
+  epochs: 200
+  early_stopping:
+    enable: true
+    patience: 30
+    min_delta: 0.001
 
+# Prompt Configuration
 prompt:
-  type: additive
+  type: "gpf_plus"  # "gpf" or "gpf_plus"
   num_prompts: 10
 
-experiment:
-  seed: 42
-  device: auto
-  log_level: INFO
+# Target-Centric Prior Modeling (now with SVD-aligned features!)
+target_centric:
+  enable: true
+  regularization:
+    beta: 0.1
+    anchor:
+      type: "random"
+      num_anchors: 500
+    mapper:
+      type: "encoder"
+    divergence:
+      type: "mmd"
+      params:
+        sigma: 1.0
 
-augmentation:
-  view1: dropN
-  view2: permE
-  aug_ratio: 0.2
+# target_centric:
+#   enable: true
+#   regularization:
+#     beta: 0.1
+#     anchor:
+#       type: "diverse"  # "random", "high_degree", "diverse"
+#       num_anchors: 500
+#       params:
+#         strategy: "closest_to_centroid"  # for diverse anchor selection
+#         nodes_per_cluster: 10
+#     mapper:
+#       type: "encoder"  # "encoder" or "projection"
+#     divergence:
+#       type: "mmd"  # "mmd", "wasserstein", "cosine"
+#       params:
+#         sigma: 1.0
+
+# Evaluation & Logging
+evaluation:
+  metrics: ["accuracy", "f1_macro", "f1_micro"]
+  save_results: true
+  results_dir: "results"
+  
+# Reproducibility
+reproducibility:
+  deterministic: true
+  benchmark: false
