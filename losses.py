@@ -620,17 +620,24 @@ class TargetCentricRegularizer(nn.Module):
         mapper_config = config.get('mapper', {})
         divergence_config = config.get('divergence', {})
         
-        # Create components
-        self.anchor_selector = create_anchor_selector(
-            anchor_config.get('type', 'random'),
-            **anchor_config.get('params', {})
-        )
+        # Handle Gaussian anchor separately (direct anchor injection mode)
+        anchor_type = anchor_config.get('type', 'random')
+        self.is_fixed_anchor_mode = (anchor_type == 'gaussian')  # 선택지 A용 조건
         
-        self.anchor_mapper = create_anchor_mapper(
-            mapper_config.get('type', 'encoder'),
-            **mapper_config.get('params', {})
-        )
-        
+        if self.is_fixed_anchor_mode:
+            self.anchor_selector = None  # selector 사용하지 않음
+            self.anchor_mapper = None    # mapper도 비활성
+        else:
+            self.anchor_selector = create_anchor_selector(
+                anchor_type,
+                **anchor_config.get('params', {})
+            )
+            
+            self.anchor_mapper = create_anchor_mapper(
+                mapper_config.get('type', 'encoder'),
+                **mapper_config.get('params', {})
+            )
+
         self.divergence_metric = create_divergence_metric(
             divergence_config.get('type', 'mmd'),
             **divergence_config.get('params', {})
@@ -641,10 +648,22 @@ class TargetCentricRegularizer(nn.Module):
         
         # projector 등록은 초기화 후에 수행
         self.projector_registered = False
-    
+        self.fixed_anchors = None  # 선택지 A용 수동 anchor 보관 공간
+
+    def initialize_fixed_anchors(self, anchor_vectors: torch.Tensor):
+        """
+        선택지 A (gaussian anchor prior)에서 직접 anchor 벡터를 주입받는 경우.
+        """
+        self.fixed_anchors = anchor_vectors.detach()
+        logging.info(f"✅ [Gaussian] Fixed anchors registered with shape: {self.fixed_anchors.shape}")
+
     def initialize_anchors(self, target_features: torch.Tensor, 
                           encoder: nn.Module, edge_index: Optional[torch.Tensor] = None):
         """Initialize anchor points and their representations."""
+        if self.is_fixed_anchor_mode:
+            # 선택지 A에서는 이 함수가 불리면 안 됨
+            raise RuntimeError("❌ Cannot initialize anchors when using fixed Gaussian prior.")
+        
         # Step 1: Select anchor nodes from original target features
         anchor_features = self.anchor_selector.select_anchors(
             target_features, edge_index, self.num_anchors
@@ -658,7 +677,6 @@ class TargetCentricRegularizer(nn.Module):
         # Step 3: Register projector parameters if needed (for Method 1)
         if hasattr(self.anchor_mapper, 'projector') and not self.projector_registered:
             if self.anchor_mapper.projector is not None:
-                # projector를 모듈로 등록하여 파라미터가 포함되도록 함
                 self.projector = self.anchor_mapper.projector
                 self.projector_registered = True
                 logging.info("🔧 Registered projector parameters for training")
@@ -667,7 +685,10 @@ class TargetCentricRegularizer(nn.Module):
     
     def forward(self, prompted_embeddings: torch.Tensor) -> torch.Tensor:
         """Compute regularization loss."""
-        anchor_representations = self.anchor_mapper.get_anchor_representations()
+        if self.is_fixed_anchor_mode:
+            anchor_representations = self.fixed_anchors
+        else:
+            anchor_representations = self.anchor_mapper.get_anchor_representations()
         
         divergence = self.divergence_metric.compute_divergence(
             prompted_embeddings, anchor_representations
@@ -772,3 +793,7 @@ class TargetCentricLoss(nn.Module):
         if self.regularizer is not None:
             logging.info("🔧 Initializing Target-Centric regularizer with target features")
             self.regularizer.initialize_anchors(target_features, encoder, edge_index)
+            
+    def initialize_regularizer_with_fixed_anchors(self, anchors: torch.Tensor):
+        self.anchor_vectors = anchors.detach()
+        self.mapper_type = "identity"
