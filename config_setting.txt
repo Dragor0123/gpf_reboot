@@ -111,3 +111,19 @@ target_centric:
       num_anchors: 500
     mapper:
       type: "identity"        # 자동으로 강제되
+
+
+target_centric:
+  enable: true
+  regularization:
+    beta: 0.1
+    anchor:
+      type: "mog"
+      num_components: 5             # KMeans로 추출할 중심 수 (예: 5~10)
+      num_anchors: 500              # (선택적) 의미 없음, 기록용
+    mapper:
+      type: "identity"
+    divergence:
+      type: "mmd"
+      params:
+        sigma: 1.0

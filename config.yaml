@@ -3,7 +3,7 @@
 # Experiment Type & Cross-Domain Settings
 experiment:
   type: "cross_domain"  # "single_domain" or "cross_domain"
-  source_dataset: "pubmed"
+  source_dataset: "cora"
   target_dataset: "photo"
   seed: 42
   device: auto
@@ -74,10 +74,11 @@ target_centric:
   regularization:
     beta: 0.1
     anchor:
-      type: "random"
-      num_anchors: 500
+      type: "mog"
+      num_components: 5             # KMeans로 추출할 중심 수 (예: 5~10)
+      num_anchors: 500              # (선택적) 의미 없음, 기록용
     mapper:
-      type: "encoder"
+      type: "identity"
     divergence:
       type: "mmd"
       params:

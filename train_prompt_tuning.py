@@ -217,15 +217,24 @@ def train_on_target_data(config, data, dataset_info, experiment_type, svd_reduce
     # Initialize regularizer if target-centric is enabled
     if config['target_centric']['enable']:
         logging.info("🎯 Target-Centric Prior Modeling enabled")
-
         anchor_cfg = config['target_centric']['regularization']['anchor']
-        if anchor_cfg['type'] == 'gaussian':
+        anchor_type = anchor_cfg['type']
+        
+        if anchor_type == 'gaussian':
             latent_dim = config['model']['hidden_dim']
             num_anchors = anchor_cfg['num_anchors']
             anchors = generate_gaussian_anchors(num_anchors, latent_dim, device)
             loss_fn.regularizer.initialize_fixed_anchors(anchors)
+
+        elif anchor_type == 'mog':
+            num_components = anchor_cfg.get('num_components', 5)
+            with torch.no_grad():
+                latent_z = encoder(data.x)  # pretrained encoder 적용
+            anchors = generate_mog_anchors(latent_z, num_components)
+            loss_fn.regularizer.initialize_fixed_anchors(anchors)
+
         else:
-            # 일반적인 target feature 기반 정렬
+            # 기존 방식: feature-based anchor 선택 + mapper
             target_features = data.x
             edge_index = data.edge_index if hasattr(data, 'edge_index') else None
             loss_fn.initialize_regularizer_with_target_features(
