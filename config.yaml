@@ -4,7 +4,7 @@
 experiment:
   type: "cross_domain"  # "single_domain" or "cross_domain"
   source_dataset: "cora"
-  target_dataset: "photo"
+  target_dataset: "computers"
   seed: 42
   device: auto
   log_level: INFO
@@ -84,37 +84,19 @@ target_centric:
       params:
         sigma: 1.0
 
-# target_centric:
-#   enable: true
-#   regularization:
-#     beta: 0.1
-#     anchor:
-#       type: "gaussian"        # 핵심 변경 사항
-#       num_anchors: 500
-#     mapper:
-#       type: "identity"        # 자동으로 강제되긴 하지만 명시 권장
-#     divergence:
-#       type: "mmd"
-#       params:
-#         sigma: 1.0
-
-
-# target_centric:
-#   enable: true
-#   regularization:
-#     beta: 0.1
-#     anchor:
-#       type: "diverse"  # "random", "high_degree", "diverse"
-#       num_anchors: 500
-#       params:
-#         strategy: "closest_to_centroid"  # for diverse anchor selection
-#         nodes_per_cluster: 10
-#     mapper:
-#       type: "encoder"  # "encoder" or "projection"
-#     divergence:
-#       type: "mmd"  # "mmd", "wasserstein", "cosine"
-#       params:
-#         sigma: 1.0
+target_centric:
+  enable: true
+  regularization:
+    beta: 0.1
+    anchor:
+      type: "random"
+      num_anchors: 500
+    mapper:
+      type: "encoder"
+    divergence:
+      type: "mmd"
+      params:
+        sigma: 1.0
 
 # Evaluation & Logging
 evaluation:
