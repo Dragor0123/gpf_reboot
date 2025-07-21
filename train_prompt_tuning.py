@@ -231,6 +231,24 @@ def train_on_target_data(config, data, dataset_info, experiment_type, svd_reduce
             num_anchors = anchor_cfg['num_anchors']
             anchors = generate_gaussian_anchors(num_anchors, latent_dim, device)
             loss_fn.regularizer.initialize_fixed_anchors(anchors)
+        elif anchor_type == 'mog':
+            num_components = anchor_cfg.get('num_components', 5)
+            num_anchors = anchor_cfg.get('num_anchors', 500)  # 추가!
+            
+            with torch.no_grad():
+                encoder.eval()
+                latent_z = encoder(data.x, data.edge_index)  # edge_index 추가
+            
+            # Choose implementation
+            use_sklearn_gmm = anchor_cfg.get('use_sklearn_gmm', False)
+            
+            if use_sklearn_gmm:
+                anchors = generate_mog_anchors(latent_z, num_components, num_anchors)
+            else:
+                anchors = generate_mog_anchors_simple(latent_z, num_components, num_anchors)
+            
+            loss_fn.regularizer.initialize_fixed_anchors(anchors)
+            logging.info(f"🎯 MoG anchors initialized: {anchors.shape}")
         else:
             # 기존 방식: feature-based anchor 선택 + mapper
             target_features = data.x

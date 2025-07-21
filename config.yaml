@@ -3,9 +3,9 @@
 # Experiment Type & Cross-Domain Settings
 experiment:
   type: "cross_domain"  # "single_domain" or "cross_domain"
-  source_dataset: "photo"
-  target_dataset: "computers"
-  seed: 46
+  source_dataset: "cora"
+  target_dataset: "citeseer"
+  seed: 42
   device: auto
   log_level: INFO
   run_name: null  # auto-generated if null
@@ -76,34 +76,35 @@ prompt:
   type: "gpf_plus"  # "gpf" or "gpf_plus"
   num_prompts: 10
 
-target_centric:
-  enable: false
-  regularization:
-    beta: 0.0 #0.001
-    anchor:
-      type: "random"
-      num_anchors: 500
-    mapper:
-      type: "encoder"
-    divergence:
-      type: "mmd"
-      params:
-        sigma: 0.8 #0.5
-
 # target_centric:
-#   enable: true
+#   enable: false
 #   regularization:
-#     beta: 0.1
+#     beta: 0.0 #0.001
 #     anchor:
-#       type: "high_degree"
+#       type: "random"
 #       num_anchors: 500
 #     mapper:
 #       type: "encoder"
 #     divergence:
 #       type: "mmd"
 #       params:
-#         sigma: 1.0
+#         sigma: 0.8 #0.5
 
+target_centric:
+  enable: true
+  regularization:
+    beta: 0.01
+    anchor:
+      type: "mog"
+      num_components: 8      # Gaussian component 수
+      num_anchors: 500       # 총 anchor 수
+      use_sklearn_gmm: false # true면 full GMM, false면 simplified
+    mapper:
+      type: "identity"       # MoG는 이미 latent space에서 생성
+    divergence:
+      type: "mmd"
+      params:
+        sigma: 0.8
 
 # Evaluation & Logging
 evaluation:
