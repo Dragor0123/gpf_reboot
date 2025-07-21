@@ -622,7 +622,7 @@ class TargetCentricRegularizer(nn.Module):
         
         # Handle Gaussian anchor separately (direct anchor injection mode)
         anchor_type = anchor_config.get('type', 'random')
-        self.is_fixed_anchor_mode = (anchor_type == 'gaussian')  # 선택지 A용 조건
+        self.is_fixed_anchor_mode = (anchor_type in ['gaussian', 'mog'])  # 선택지 A용 조건
         
         if self.is_fixed_anchor_mode:
             self.anchor_selector = None  # selector 사용하지 않음

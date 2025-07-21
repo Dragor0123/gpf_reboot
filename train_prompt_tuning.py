@@ -16,7 +16,7 @@ from models import create_model, Classifier
 from datasets import load_dataset, validate_cross_domain_compatibility
 from prompts.gpf_prompt import GPFPrompt, ResidualMLPPrompt
 from losses import TargetCentricLoss
-from anchor_factory import generate_gaussian_anchors
+from anchor_factory import generate_gaussian_anchors, generate_mog_anchors, generate_mog_anchors_simple
 
 
 def evaluate_model(encoder, prompt, classifier, data, mask, device, return_embeddings=False):
