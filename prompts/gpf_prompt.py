@@ -28,12 +28,12 @@ class ResidualMLPPrompt(nn.Module):
     """
     Expressive, MMD-aligned prompt module: x + MLP(x)
     """
-    def __init__(self, in_channels, hidden_dim=64, num_layers=2, dropout=0.1):
+    def __init__(self, input_dim, hidden_dim=64, num_layers=2, dropout=0.1):
         super().__init__()
         layers = []
-        last_dim = in_channels
+        last_dim = input_dim
         for i in range(num_layers):
-            next_dim = hidden_dim if i < num_layers - 1 else in_channels
+            next_dim = hidden_dim if i < num_layers - 1 else input_dim
             layers.append(nn.Linear(last_dim, next_dim))
             if i < num_layers - 1:
                 layers.append(nn.ReLU())
@@ -41,7 +41,7 @@ class ResidualMLPPrompt(nn.Module):
             last_dim = next_dim
         self.mlp = nn.Sequential(*layers)
         # Optional: LayerNorm after prompt
-        self.norm = nn.LayerNorm(in_channels)
+        self.norm = nn.LayerNorm(input_dim)
         
     def add(self, x):
         # x: [N, F]

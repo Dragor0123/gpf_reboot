@@ -180,9 +180,15 @@ def train_on_target_data(config, data, dataset_info, experiment_type, svd_reduce
     print_model_info(encoder, "Encoder")
 
     # Initialize prompt (dimensions already aligned)
-    prompt = GPFPrompt(
-        input_dim=dataset_info['num_features'],  # SVD-aligned dimension
-        p_num=config['prompt']['num_prompts']
+    # prompt = GPFPrompt(
+    #     input_dim=dataset_info['num_features'],  # SVD-aligned dimension
+    #     p_num=config['prompt']['num_prompts']
+    # ).to(device)
+    
+    prompt = ResidualMLPPrompt(
+        input_dim=dataset_info['num_features'],
+        hidden_dim=64,
+        num_layers=2,
     ).to(device)
     
     # Initialize classifier
