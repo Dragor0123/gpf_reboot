@@ -5,7 +5,7 @@ experiment:
   type: "cross_domain"  # "single_domain" or "cross_domain"
   source_dataset: "cora"
   target_dataset: "computers"
-  seed: 42
+  seed: 46
   device: auto
   log_level: INFO
   run_name: null  # auto-generated if null
@@ -93,18 +93,18 @@ prompt:
 target_centric:
   enable: true
   regularization:
-    beta: 0.01
+    beta: 0.1
     anchor:
       type: "mog"
-      num_components: 10      # Gaussian component 수 (6개?)
-      num_anchors: 500       # 총 anchor 수
-      use_sklearn_gmm: false # true면 full GMM, false면 simplified
+      num_components: 8      # Gaussian component 수 (6개?)
+      num_anchors: 1000       # 총 anchor 수
+      use_sklearn_gmm: true  # true면 full GMM, false면 simplified
     mapper:
       type: "identity"       # MoG는 이미 latent space에서 생성
     divergence:
       type: "mmd"
       params:
-        sigma: 0.8
+        sigma: 0.25
 
 # Evaluation & Logging
 evaluation:
