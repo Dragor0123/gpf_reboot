@@ -1,3 +1,8 @@
-# GPF Reboot module
-# def create_prompt(prompt_type, in_channels, **kwargs):
-#     raise NotImplementedError(f"Prompt type '{prompt_type}' is not implemented yet.")
+"""Prompt modules for GPF experiments."""
+
+from .prompt_function import GPFPrompt, ResidualMLPPrompt
+
+__all__ = [
+    'GPFPrompt',
+    'ResidualMLPPrompt',
+]

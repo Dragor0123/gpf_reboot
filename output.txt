@@ -1,0 +1,570 @@
+=========================================
+Running experiments: citeseer -> cora
+Seeds: 42 to 46
+=========================================
+[0;34m[SEED 42][0m Starting experiment...
+2025-08-01 15:30:38,574 - __main__ - INFO - ==================================================
+2025-08-01 15:30:38,574 - __main__ - INFO - 🚀 EXPERIMENT CONFIGURATION
+2025-08-01 15:30:38,574 - __main__ - INFO - ==================================================
+2025-08-01 15:30:38,574 - __main__ - INFO - Experiment Type: cross_domain
+2025-08-01 15:30:38,574 - __main__ - INFO - Source Dataset: citeseer
+2025-08-01 15:30:38,574 - __main__ - INFO - Target Dataset: cora
+2025-08-01 15:30:38,574 - __main__ - INFO - Model: gcnii
+2025-08-01 15:30:38,574 - __main__ - INFO - Prompt Type: residual_mlp
+2025-08-01 15:30:38,574 - __main__ - INFO - Target-Centric: False
+2025-08-01 15:30:38,574 - __main__ - INFO - SVD Reduction: True
+2025-08-01 15:30:38,574 - __main__ - INFO - ==================================================
+2025-08-01 15:30:38,574 - root - INFO - Starting prompt tuning for run: citeseer_to_cora_svd100_residual_mlp_baseline_20250801_153038
+2025-08-01 15:30:38,574 - root - INFO - Starting cross-domain prompt tuning on target dataset with SVD...
+2025-08-01 15:30:38,578 - datasets.manager - INFO - Loading cross-domain datasets: citeseer → computers
+2025-08-01 15:30:38,578 - datasets.loaders - INFO - Loading citeseer dataset...
+2025-08-01 15:30:38,654 - datasets.loaders - INFO - ✅ Loaded citeseer: DatasetInfo(name='citeseer', features=3703, classes=6, nodes=3327)
+2025-08-01 15:30:38,656 - datasets.loaders - INFO - Loading computers dataset...
+2025-08-01 15:30:40,820 - datasets.loaders - INFO - ✅ Loaded computers: DatasetInfo(name='computers', features=767, classes=10, nodes=13752)
+2025-08-01 15:30:40,823 - datasets.base - INFO - Created splits: train=9627, val=1375, test=2750
+2025-08-01 15:30:40,825 - datasets.base - INFO - Class distribution:
+2025-08-01 15:30:40,825 - datasets.base - INFO -   Train: {0: 313, 1: 1463, 2: 992, 3: 373, 4: 3621, 5: 205, 6: 351, 7: 567, 8: 1549, 9: 193}
+2025-08-01 15:30:40,825 - datasets.base - INFO -   Val: {0: 38, 1: 204, 2: 145, 3: 58, 4: 522, 5: 41, 6: 42, 7: 77, 8: 211, 9: 37}
+2025-08-01 15:30:40,825 - datasets.base - INFO -   Test: {0: 85, 1: 475, 2: 277, 3: 111, 4: 1015, 5: 62, 6: 94, 7: 174, 8: 396, 9: 61}
+2025-08-01 15:30:40,825 - datasets.manager - INFO - Applying SVD reduction: 3703D → 100D
+2025-08-01 15:30:40,825 - datasets.manager - INFO - Creating new SVD reducer
+2025-08-01 15:30:40,825 - core.svd_reducer - INFO - Fitting SVD: 3703D → 100D
+2025-08-01 15:30:40,964 - core.svd_reducer - INFO - ✅ SVD fitted successfully
+2025-08-01 15:30:40,964 - core.svd_reducer - INFO -    Components: 100
+2025-08-01 15:30:40,964 - core.svd_reducer - INFO -    Explained variance: 0.3395
+2025-08-01 15:30:40,966 - core.svd_reducer - INFO - 💾 SVD reducer saved: checkpoints/citeseer_svd_reducer.pkl
+2025-08-01 15:30:40,996 - datasets.manager - INFO - ✅ SVD reduction applied. Explained variance: 0.3395
+2025-08-01 15:30:40,999 - datasets.manager - INFO - Applying source SVD to target dataset: 767D → 100D
+2025-08-01 15:30:41,001 - core.svd_reducer - WARNING - Input dimension 767 < original 3703, zero-padding
+2025-08-01 15:30:41,240 - datasets.manager - INFO - ✅ SVD alignment completed between source and target
+2025-08-01 15:30:41,240 - datasets.base - ERROR - Number of classes differs: source=6, target=10
+2025-08-01 15:30:41,241 - datasets.manager - INFO - ✅ Cross-domain datasets loaded:
+2025-08-01 15:30:41,241 - datasets.manager - INFO -    Source: DatasetInfo(name='citeseer', features=100, classes=6, nodes=3327)
+2025-08-01 15:30:41,241 - datasets.manager - INFO -    Target: DatasetInfo(name='computers', features=100, classes=10, nodes=13752)
+2025-08-01 15:30:41,241 - datasets.base - ERROR - Number of classes differs: source=6, target=10
+2025-08-01 15:30:41,401 - root - INFO - 🔧 Prompt tuning with SVD-aligned features:
+2025-08-01 15:30:41,401 - root - INFO -    Original target dimension: 767
+2025-08-01 15:30:41,401 - root - INFO -    Aligned dimension: 100
+2025-08-01 15:30:41,401 - root - INFO -    SVD explained variance: 0.3395
+2025-08-01 15:30:41,403 - root - INFO - ✅ Dimension verification passed: 100D
+2025-08-01 15:30:41,427 - models.architectures - INFO - Created GCNII model with 96,128 parameters
+2025-08-01 15:30:41,454 - __main__ - INFO - ✅ Loaded checkpoint from checkpoints/citeseer_encoder_final.pt
+2025-08-01 15:30:41,454 - root - INFO - ✅ Loaded pretrained encoder (frozen) with perfect dimension alignment
+2025-08-01 15:30:41,454 - models.base - INFO - 
+📊 Encoder Information:
+2025-08-01 15:30:41,454 - models.base - INFO -    Total parameters: 0
+2025-08-01 15:30:41,454 - models.base - INFO -    Model size: 0.00 MB
+2025-08-01 15:30:41,454 - models.base - INFO -    Module breakdown:
+2025-08-01 15:30:41,454 - models.base - INFO -      lin_in: 0 parameters
+2025-08-01 15:30:41,454 - models.base - INFO -      convs: 0 parameters
+2025-08-01 15:30:41,454 - models.base - INFO -      dropout_layer: 0 parameters
+2025-08-01 15:30:41,454 - models.base - INFO -      layer_norms: 0 parameters
+2025-08-01 15:30:41,454 - models.base - INFO -    Architecture: GCNIIEncoder
+2025-08-01 15:30:41,454 - models.base - INFO -    Input/Hidden dims: 100/128
+2025-08-01 15:30:41,454 - models.base - INFO -    Layers: 5
+2025-08-01 15:30:41,455 - root - INFO - Created ResidualMLPPrompt with hidden_dim=64, num_layers=2, dropout=0.1
+2025-08-01 15:30:41,456 - models.base - INFO - 
+📊 Prompt Information:
+2025-08-01 15:30:41,456 - models.base - INFO -    Total parameters: 13,164
+2025-08-01 15:30:41,456 - models.base - INFO -    Model size: 0.05 MB
+2025-08-01 15:30:41,456 - models.base - INFO -    Module breakdown:
+2025-08-01 15:30:41,456 - models.base - INFO -      mlp: 12,964 parameters
+2025-08-01 15:30:41,456 - models.base - INFO -      norm: 200 parameters
+2025-08-01 15:30:41,456 - models.base - INFO - 
+📊 Classifier Information:
+2025-08-01 15:30:41,456 - models.base - INFO -    Total parameters: 1,290
+2025-08-01 15:30:41,456 - models.base - INFO -    Model size: 0.00 MB
+2025-08-01 15:30:41,456 - models.base - INFO -    Module breakdown:
+2025-08-01 15:30:41,456 - models.base - INFO -      classifier: 1,290 parameters
+2025-08-01 15:30:41,474 - root - INFO - Training data: 9627 nodes
+2025-08-01 15:30:41,476 - root - INFO - Validation data: 1375 nodes
+2025-08-01 15:30:41,479 - root - INFO - Test data: 2750 nodes
+2025-08-01 15:30:41,839 - root - INFO - Epoch 000 | Total Loss: 3.3028 | Task Loss: 3.3028 | Val Acc: 0.1484
+2025-08-01 15:30:42,122 - root - INFO - Epoch 010 | Total Loss: 1.9695 | Task Loss: 1.9695 | Val Acc: 0.3011
+2025-08-01 15:30:42,362 - root - INFO - Epoch 020 | Total Loss: 1.9138 | Task Loss: 1.9138 | Val Acc: 0.3796
+2025-08-01 15:30:42,718 - root - INFO - Epoch 030 | Total Loss: 1.8856 | Task Loss: 1.8856 | Val Acc: 0.3796
+2025-08-01 15:30:43,068 - root - INFO - Epoch 040 | Total Loss: 1.8700 | Task Loss: 1.8700 | Val Acc: 0.3796
+2025-08-01 15:30:43,343 - root - INFO - Epoch 050 | Total Loss: 1.8596 | Task Loss: 1.8596 | Val Acc: 0.3796
+2025-08-01 15:30:43,584 - root - INFO - Epoch 060 | Total Loss: 1.8501 | Task Loss: 1.8501 | Val Acc: 0.3796
+2025-08-01 15:30:43,936 - root - INFO - Epoch 070 | Total Loss: 1.8427 | Task Loss: 1.8427 | Val Acc: 0.3782
+2025-08-01 15:30:44,287 - root - INFO - Epoch 080 | Total Loss: 1.8355 | Task Loss: 1.8355 | Val Acc: 0.3753
+2025-08-01 15:30:44,563 - root - INFO - Epoch 090 | Total Loss: 1.8267 | Task Loss: 1.8267 | Val Acc: 0.3724
+2025-08-01 15:30:44,806 - root - INFO - Epoch 100 | Total Loss: 1.8187 | Task Loss: 1.8187 | Val Acc: 0.3738
+2025-08-01 15:30:45,162 - root - INFO - Epoch 110 | Total Loss: 1.8049 | Task Loss: 1.8049 | Val Acc: 0.3775
+2025-08-01 15:30:45,508 - root - INFO - Epoch 120 | Total Loss: 1.7875 | Task Loss: 1.7875 | Val Acc: 0.3804
+2025-08-01 15:30:45,786 - root - INFO - Epoch 130 | Total Loss: 1.7689 | Task Loss: 1.7689 | Val Acc: 0.3796
+2025-08-01 15:30:46,027 - root - INFO - Epoch 140 | Total Loss: 1.7634 | Task Loss: 1.7634 | Val Acc: 0.3855
+2025-08-01 15:30:46,383 - root - INFO - Epoch 150 | Total Loss: 1.6996 | Task Loss: 1.6996 | Val Acc: 0.3847
+2025-08-01 15:30:46,730 - root - INFO - Epoch 160 | Total Loss: 1.7260 | Task Loss: 1.7260 | Val Acc: 0.4531
+2025-08-01 15:30:47,007 - root - INFO - Epoch 170 | Total Loss: 1.6678 | Task Loss: 1.6678 | Val Acc: 0.4044
+2025-08-01 15:30:47,249 - root - INFO - Epoch 180 | Total Loss: 1.6297 | Task Loss: 1.6297 | Val Acc: 0.3804
+2025-08-01 15:30:47,598 - root - INFO - Epoch 190 | Total Loss: 1.7037 | Task Loss: 1.7037 | Val Acc: 0.3789
+2025-08-01 15:30:47,927 - root - INFO - Epoch 199 | Total Loss: 1.6900 | Task Loss: 1.6900 | Val Acc: 0.3782
+2025-08-01 15:30:47,992 - root - INFO - 
+==================================================
+2025-08-01 15:30:47,992 - root - INFO - 📊 FINAL TEST RESULTS
+2025-08-01 15:30:47,992 - root - INFO - ==================================================
+2025-08-01 15:30:47,992 - root - INFO - ACCURACY    : 0.3684
+2025-08-01 15:30:47,992 - root - INFO - F1_MACRO    : 0.0557
+2025-08-01 15:30:47,992 - root - INFO - F1_MICRO    : 0.3684
+2025-08-01 15:30:47,992 - root - INFO - AUROC       : 0.6018
+2025-08-01 15:30:47,992 - root - INFO - SVD DIM REDUCTION: 767D → 100D
+2025-08-01 15:30:47,992 - root - INFO - EXPLAINED VARIANCE: 0.3395
+2025-08-01 15:30:47,992 - root - INFO - ==================================================
+2025-08-01 15:30:48,024 - __main__ - INFO - 💾 Results saved to: results/svd_applied/base/citeseer_to_cora_svd100_residual_mlp_baseline_20250801_153038_results.yaml
+2025-08-01 15:30:48,024 - root - INFO - ✅ Prompt tuning completed successfully!
+[0;32m[SEED 42][0m Completed successfully
+
+[0;34m[SEED 43][0m Starting experiment...
+2025-08-01 15:30:50,902 - __main__ - INFO - ==================================================
+2025-08-01 15:30:50,902 - __main__ - INFO - 🚀 EXPERIMENT CONFIGURATION
+2025-08-01 15:30:50,902 - __main__ - INFO - ==================================================
+2025-08-01 15:30:50,902 - __main__ - INFO - Experiment Type: cross_domain
+2025-08-01 15:30:50,902 - __main__ - INFO - Source Dataset: citeseer
+2025-08-01 15:30:50,902 - __main__ - INFO - Target Dataset: cora
+2025-08-01 15:30:50,902 - __main__ - INFO - Model: gcnii
+2025-08-01 15:30:50,902 - __main__ - INFO - Prompt Type: residual_mlp
+2025-08-01 15:30:50,902 - __main__ - INFO - Target-Centric: False
+2025-08-01 15:30:50,902 - __main__ - INFO - SVD Reduction: True
+2025-08-01 15:30:50,902 - __main__ - INFO - ==================================================
+2025-08-01 15:30:50,902 - root - INFO - Starting prompt tuning for run: citeseer_to_cora_svd100_residual_mlp_baseline_20250801_153050
+2025-08-01 15:30:50,902 - root - INFO - Starting cross-domain prompt tuning on target dataset with SVD...
+2025-08-01 15:30:50,906 - datasets.manager - INFO - Loading cross-domain datasets: citeseer → computers
+2025-08-01 15:30:50,906 - datasets.loaders - INFO - Loading citeseer dataset...
+2025-08-01 15:30:50,981 - datasets.loaders - INFO - ✅ Loaded citeseer: DatasetInfo(name='citeseer', features=3703, classes=6, nodes=3327)
+2025-08-01 15:30:50,982 - datasets.loaders - INFO - Loading computers dataset...
+2025-08-01 15:30:53,118 - datasets.loaders - INFO - ✅ Loaded computers: DatasetInfo(name='computers', features=767, classes=10, nodes=13752)
+2025-08-01 15:30:53,121 - datasets.base - INFO - Created splits: train=9627, val=1375, test=2750
+2025-08-01 15:30:53,123 - datasets.base - INFO - Class distribution:
+2025-08-01 15:30:53,123 - datasets.base - INFO -   Train: {0: 313, 1: 1463, 2: 992, 3: 373, 4: 3621, 5: 205, 6: 351, 7: 567, 8: 1549, 9: 193}
+2025-08-01 15:30:53,123 - datasets.base - INFO -   Val: {0: 38, 1: 204, 2: 145, 3: 58, 4: 522, 5: 41, 6: 42, 7: 77, 8: 211, 9: 37}
+2025-08-01 15:30:53,123 - datasets.base - INFO -   Test: {0: 85, 1: 475, 2: 277, 3: 111, 4: 1015, 5: 62, 6: 94, 7: 174, 8: 396, 9: 61}
+2025-08-01 15:30:53,123 - datasets.manager - INFO - Applying SVD reduction: 3703D → 100D
+2025-08-01 15:30:53,123 - datasets.manager - INFO - Creating new SVD reducer
+2025-08-01 15:30:53,123 - core.svd_reducer - INFO - Fitting SVD: 3703D → 100D
+2025-08-01 15:30:53,258 - core.svd_reducer - INFO - ✅ SVD fitted successfully
+2025-08-01 15:30:53,258 - core.svd_reducer - INFO -    Components: 100
+2025-08-01 15:30:53,258 - core.svd_reducer - INFO -    Explained variance: 0.3395
+2025-08-01 15:30:53,261 - core.svd_reducer - INFO - 💾 SVD reducer saved: checkpoints/citeseer_svd_reducer.pkl
+2025-08-01 15:30:53,291 - datasets.manager - INFO - ✅ SVD reduction applied. Explained variance: 0.3395
+2025-08-01 15:30:53,294 - datasets.manager - INFO - Applying source SVD to target dataset: 767D → 100D
+2025-08-01 15:30:53,297 - core.svd_reducer - WARNING - Input dimension 767 < original 3703, zero-padding
+2025-08-01 15:30:53,535 - datasets.manager - INFO - ✅ SVD alignment completed between source and target
+2025-08-01 15:30:53,536 - datasets.base - ERROR - Number of classes differs: source=6, target=10
+2025-08-01 15:30:53,536 - datasets.manager - INFO - ✅ Cross-domain datasets loaded:
+2025-08-01 15:30:53,536 - datasets.manager - INFO -    Source: DatasetInfo(name='citeseer', features=100, classes=6, nodes=3327)
+2025-08-01 15:30:53,536 - datasets.manager - INFO -    Target: DatasetInfo(name='computers', features=100, classes=10, nodes=13752)
+2025-08-01 15:30:53,536 - datasets.base - ERROR - Number of classes differs: source=6, target=10
+2025-08-01 15:30:53,750 - root - INFO - 🔧 Prompt tuning with SVD-aligned features:
+2025-08-01 15:30:53,751 - root - INFO -    Original target dimension: 767
+2025-08-01 15:30:53,751 - root - INFO -    Aligned dimension: 100
+2025-08-01 15:30:53,751 - root - INFO -    SVD explained variance: 0.3395
+2025-08-01 15:30:53,753 - root - INFO - ✅ Dimension verification passed: 100D
+2025-08-01 15:30:53,777 - models.architectures - INFO - Created GCNII model with 96,128 parameters
+2025-08-01 15:30:53,884 - __main__ - INFO - ✅ Loaded checkpoint from checkpoints/citeseer_encoder_final.pt
+2025-08-01 15:30:53,884 - root - INFO - ✅ Loaded pretrained encoder (frozen) with perfect dimension alignment
+2025-08-01 15:30:53,884 - models.base - INFO - 
+📊 Encoder Information:
+2025-08-01 15:30:53,884 - models.base - INFO -    Total parameters: 0
+2025-08-01 15:30:53,884 - models.base - INFO -    Model size: 0.00 MB
+2025-08-01 15:30:53,884 - models.base - INFO -    Module breakdown:
+2025-08-01 15:30:53,884 - models.base - INFO -      lin_in: 0 parameters
+2025-08-01 15:30:53,884 - models.base - INFO -      convs: 0 parameters
+2025-08-01 15:30:53,884 - models.base - INFO -      dropout_layer: 0 parameters
+2025-08-01 15:30:53,884 - models.base - INFO -      layer_norms: 0 parameters
+2025-08-01 15:30:53,884 - models.base - INFO -    Architecture: GCNIIEncoder
+2025-08-01 15:30:53,884 - models.base - INFO -    Input/Hidden dims: 100/128
+2025-08-01 15:30:53,884 - models.base - INFO -    Layers: 5
+2025-08-01 15:30:53,884 - root - INFO - Created ResidualMLPPrompt with hidden_dim=64, num_layers=2, dropout=0.1
+2025-08-01 15:30:53,898 - models.base - INFO - 
+📊 Prompt Information:
+2025-08-01 15:30:53,898 - models.base - INFO -    Total parameters: 13,164
+2025-08-01 15:30:53,898 - models.base - INFO -    Model size: 0.05 MB
+2025-08-01 15:30:53,898 - models.base - INFO -    Module breakdown:
+2025-08-01 15:30:53,898 - models.base - INFO -      mlp: 12,964 parameters
+2025-08-01 15:30:53,898 - models.base - INFO -      norm: 200 parameters
+2025-08-01 15:30:53,898 - models.base - INFO - 
+📊 Classifier Information:
+2025-08-01 15:30:53,898 - models.base - INFO -    Total parameters: 1,290
+2025-08-01 15:30:53,898 - models.base - INFO -    Model size: 0.00 MB
+2025-08-01 15:30:53,898 - models.base - INFO -    Module breakdown:
+2025-08-01 15:30:53,898 - models.base - INFO -      classifier: 1,290 parameters
+2025-08-01 15:30:53,916 - root - INFO - Training data: 9627 nodes
+2025-08-01 15:30:53,916 - root - INFO - Validation data: 1375 nodes
+2025-08-01 15:30:53,917 - root - INFO - Test data: 2750 nodes
+2025-08-01 15:30:54,269 - root - INFO - Epoch 000 | Total Loss: 3.0512 | Task Loss: 3.0512 | Val Acc: 0.1164
+2025-08-01 15:30:54,618 - root - INFO - Epoch 010 | Total Loss: 1.8966 | Task Loss: 1.8966 | Val Acc: 0.3796
+2025-08-01 15:30:54,878 - root - INFO - Epoch 020 | Total Loss: 1.8648 | Task Loss: 1.8648 | Val Acc: 0.3796
+2025-08-01 15:30:55,122 - root - INFO - Epoch 030 | Total Loss: 1.8511 | Task Loss: 1.8511 | Val Acc: 0.3796
+2025-08-01 15:30:55,468 - root - INFO - Epoch 040 | Total Loss: 1.8433 | Task Loss: 1.8433 | Val Acc: 0.3796
+2025-08-01 15:30:55,821 - root - INFO - Epoch 050 | Total Loss: 1.8315 | Task Loss: 1.8315 | Val Acc: 0.3796
+2025-08-01 15:30:56,099 - root - INFO - Epoch 060 | Total Loss: 1.8207 | Task Loss: 1.8207 | Val Acc: 0.3804
+2025-08-01 15:30:56,342 - root - INFO - Epoch 070 | Total Loss: 1.8097 | Task Loss: 1.8097 | Val Acc: 0.3804
+2025-08-01 15:30:56,705 - root - INFO - Epoch 080 | Total Loss: 1.8080 | Task Loss: 1.8080 | Val Acc: 0.3789
+2025-08-01 15:30:57,067 - root - INFO - Epoch 090 | Total Loss: 1.7842 | Task Loss: 1.7842 | Val Acc: 0.3796
+2025-08-01 15:30:57,325 - root - INFO - Epoch 100 | Total Loss: 1.8016 | Task Loss: 1.8016 | Val Acc: 0.3811
+2025-08-01 15:30:57,571 - root - INFO - Epoch 110 | Total Loss: 1.7520 | Task Loss: 1.7520 | Val Acc: 0.4051
+2025-08-01 15:30:57,931 - root - INFO - Epoch 120 | Total Loss: 1.9608 | Task Loss: 1.9608 | Val Acc: 0.3796
+2025-08-01 15:30:58,297 - root - INFO - Epoch 130 | Total Loss: 1.8150 | Task Loss: 1.8150 | Val Acc: 0.3804
+2025-08-01 15:30:58,540 - root - INFO - Epoch 140 | Total Loss: 1.8099 | Task Loss: 1.8099 | Val Acc: 0.3731
+2025-08-01 15:30:58,783 - root - INFO - Epoch 150 | Total Loss: 1.7949 | Task Loss: 1.7949 | Val Acc: 0.3796
+2025-08-01 15:30:59,143 - root - INFO - Epoch 160 | Total Loss: 1.7709 | Task Loss: 1.7709 | Val Acc: 0.3782
+2025-08-01 15:30:59,503 - root - INFO - Epoch 170 | Total Loss: 1.7190 | Task Loss: 1.7190 | Val Acc: 0.4087
+2025-08-01 15:30:59,751 - root - INFO - Epoch 180 | Total Loss: 2.1786 | Task Loss: 2.1786 | Val Acc: 0.4131
+2025-08-01 15:30:59,996 - root - INFO - Epoch 190 | Total Loss: 1.7976 | Task Loss: 1.7976 | Val Acc: 0.3789
+2025-08-01 15:31:00,316 - root - INFO - Epoch 199 | Total Loss: 1.7857 | Task Loss: 1.7857 | Val Acc: 0.3782
+2025-08-01 15:31:00,380 - root - INFO - 
+==================================================
+2025-08-01 15:31:00,380 - root - INFO - 📊 FINAL TEST RESULTS
+2025-08-01 15:31:00,380 - root - INFO - ==================================================
+2025-08-01 15:31:00,380 - root - INFO - ACCURACY    : 0.3705
+2025-08-01 15:31:00,380 - root - INFO - F1_MACRO    : 0.0625
+2025-08-01 15:31:00,380 - root - INFO - F1_MICRO    : 0.3705
+2025-08-01 15:31:00,380 - root - INFO - AUROC       : 0.6083
+2025-08-01 15:31:00,380 - root - INFO - SVD DIM REDUCTION: 767D → 100D
+2025-08-01 15:31:00,380 - root - INFO - EXPLAINED VARIANCE: 0.3395
+2025-08-01 15:31:00,380 - root - INFO - ==================================================
+2025-08-01 15:31:00,411 - __main__ - INFO - 💾 Results saved to: results/svd_applied/base/citeseer_to_cora_svd100_residual_mlp_baseline_20250801_153050_results.yaml
+2025-08-01 15:31:00,411 - root - INFO - ✅ Prompt tuning completed successfully!
+[0;32m[SEED 43][0m Completed successfully
+
+[0;34m[SEED 44][0m Starting experiment...
+2025-08-01 15:31:03,286 - __main__ - INFO - ==================================================
+2025-08-01 15:31:03,286 - __main__ - INFO - 🚀 EXPERIMENT CONFIGURATION
+2025-08-01 15:31:03,286 - __main__ - INFO - ==================================================
+2025-08-01 15:31:03,286 - __main__ - INFO - Experiment Type: cross_domain
+2025-08-01 15:31:03,286 - __main__ - INFO - Source Dataset: citeseer
+2025-08-01 15:31:03,286 - __main__ - INFO - Target Dataset: cora
+2025-08-01 15:31:03,286 - __main__ - INFO - Model: gcnii
+2025-08-01 15:31:03,286 - __main__ - INFO - Prompt Type: residual_mlp
+2025-08-01 15:31:03,286 - __main__ - INFO - Target-Centric: False
+2025-08-01 15:31:03,286 - __main__ - INFO - SVD Reduction: True
+2025-08-01 15:31:03,286 - __main__ - INFO - ==================================================
+2025-08-01 15:31:03,286 - root - INFO - Starting prompt tuning for run: citeseer_to_cora_svd100_residual_mlp_baseline_20250801_153103
+2025-08-01 15:31:03,286 - root - INFO - Starting cross-domain prompt tuning on target dataset with SVD...
+2025-08-01 15:31:03,291 - datasets.manager - INFO - Loading cross-domain datasets: citeseer → computers
+2025-08-01 15:31:03,291 - datasets.loaders - INFO - Loading citeseer dataset...
+2025-08-01 15:31:03,365 - datasets.loaders - INFO - ✅ Loaded citeseer: DatasetInfo(name='citeseer', features=3703, classes=6, nodes=3327)
+2025-08-01 15:31:03,367 - datasets.loaders - INFO - Loading computers dataset...
+2025-08-01 15:31:05,478 - datasets.loaders - INFO - ✅ Loaded computers: DatasetInfo(name='computers', features=767, classes=10, nodes=13752)
+2025-08-01 15:31:05,481 - datasets.base - INFO - Created splits: train=9627, val=1375, test=2750
+2025-08-01 15:31:05,483 - datasets.base - INFO - Class distribution:
+2025-08-01 15:31:05,483 - datasets.base - INFO -   Train: {0: 313, 1: 1463, 2: 992, 3: 373, 4: 3621, 5: 205, 6: 351, 7: 567, 8: 1549, 9: 193}
+2025-08-01 15:31:05,483 - datasets.base - INFO -   Val: {0: 38, 1: 204, 2: 145, 3: 58, 4: 522, 5: 41, 6: 42, 7: 77, 8: 211, 9: 37}
+2025-08-01 15:31:05,483 - datasets.base - INFO -   Test: {0: 85, 1: 475, 2: 277, 3: 111, 4: 1015, 5: 62, 6: 94, 7: 174, 8: 396, 9: 61}
+2025-08-01 15:31:05,483 - datasets.manager - INFO - Applying SVD reduction: 3703D → 100D
+2025-08-01 15:31:05,483 - datasets.manager - INFO - Creating new SVD reducer
+2025-08-01 15:31:05,483 - core.svd_reducer - INFO - Fitting SVD: 3703D → 100D
+2025-08-01 15:31:05,616 - core.svd_reducer - INFO - ✅ SVD fitted successfully
+2025-08-01 15:31:05,616 - core.svd_reducer - INFO -    Components: 100
+2025-08-01 15:31:05,616 - core.svd_reducer - INFO -    Explained variance: 0.3395
+2025-08-01 15:31:05,618 - core.svd_reducer - INFO - 💾 SVD reducer saved: checkpoints/citeseer_svd_reducer.pkl
+2025-08-01 15:31:05,648 - datasets.manager - INFO - ✅ SVD reduction applied. Explained variance: 0.3395
+2025-08-01 15:31:05,651 - datasets.manager - INFO - Applying source SVD to target dataset: 767D → 100D
+2025-08-01 15:31:05,654 - core.svd_reducer - WARNING - Input dimension 767 < original 3703, zero-padding
+2025-08-01 15:31:05,888 - datasets.manager - INFO - ✅ SVD alignment completed between source and target
+2025-08-01 15:31:05,888 - datasets.base - ERROR - Number of classes differs: source=6, target=10
+2025-08-01 15:31:05,889 - datasets.manager - INFO - ✅ Cross-domain datasets loaded:
+2025-08-01 15:31:05,889 - datasets.manager - INFO -    Source: DatasetInfo(name='citeseer', features=100, classes=6, nodes=3327)
+2025-08-01 15:31:05,889 - datasets.manager - INFO -    Target: DatasetInfo(name='computers', features=100, classes=10, nodes=13752)
+2025-08-01 15:31:05,889 - datasets.base - ERROR - Number of classes differs: source=6, target=10
+2025-08-01 15:31:06,030 - root - INFO - 🔧 Prompt tuning with SVD-aligned features:
+2025-08-01 15:31:06,030 - root - INFO -    Original target dimension: 767
+2025-08-01 15:31:06,030 - root - INFO -    Aligned dimension: 100
+2025-08-01 15:31:06,030 - root - INFO -    SVD explained variance: 0.3395
+2025-08-01 15:31:06,033 - root - INFO - ✅ Dimension verification passed: 100D
+2025-08-01 15:31:06,057 - models.architectures - INFO - Created GCNII model with 96,128 parameters
+2025-08-01 15:31:06,094 - __main__ - INFO - ✅ Loaded checkpoint from checkpoints/citeseer_encoder_final.pt
+2025-08-01 15:31:06,094 - root - INFO - ✅ Loaded pretrained encoder (frozen) with perfect dimension alignment
+2025-08-01 15:31:06,095 - models.base - INFO - 
+📊 Encoder Information:
+2025-08-01 15:31:06,095 - models.base - INFO -    Total parameters: 0
+2025-08-01 15:31:06,095 - models.base - INFO -    Model size: 0.00 MB
+2025-08-01 15:31:06,095 - models.base - INFO -    Module breakdown:
+2025-08-01 15:31:06,095 - models.base - INFO -      lin_in: 0 parameters
+2025-08-01 15:31:06,095 - models.base - INFO -      convs: 0 parameters
+2025-08-01 15:31:06,095 - models.base - INFO -      dropout_layer: 0 parameters
+2025-08-01 15:31:06,095 - models.base - INFO -      layer_norms: 0 parameters
+2025-08-01 15:31:06,095 - models.base - INFO -    Architecture: GCNIIEncoder
+2025-08-01 15:31:06,095 - models.base - INFO -    Input/Hidden dims: 100/128
+2025-08-01 15:31:06,095 - models.base - INFO -    Layers: 5
+2025-08-01 15:31:06,095 - root - INFO - Created ResidualMLPPrompt with hidden_dim=64, num_layers=2, dropout=0.1
+2025-08-01 15:31:06,097 - models.base - INFO - 
+📊 Prompt Information:
+2025-08-01 15:31:06,097 - models.base - INFO -    Total parameters: 13,164
+2025-08-01 15:31:06,097 - models.base - INFO -    Model size: 0.05 MB
+2025-08-01 15:31:06,097 - models.base - INFO -    Module breakdown:
+2025-08-01 15:31:06,097 - models.base - INFO -      mlp: 12,964 parameters
+2025-08-01 15:31:06,097 - models.base - INFO -      norm: 200 parameters
+2025-08-01 15:31:06,097 - models.base - INFO - 
+📊 Classifier Information:
+2025-08-01 15:31:06,097 - models.base - INFO -    Total parameters: 1,290
+2025-08-01 15:31:06,097 - models.base - INFO -    Model size: 0.00 MB
+2025-08-01 15:31:06,097 - models.base - INFO -    Module breakdown:
+2025-08-01 15:31:06,097 - models.base - INFO -      classifier: 1,290 parameters
+2025-08-01 15:31:06,116 - root - INFO - Training data: 9627 nodes
+2025-08-01 15:31:06,118 - root - INFO - Validation data: 1375 nodes
+2025-08-01 15:31:06,118 - root - INFO - Test data: 2750 nodes
+2025-08-01 15:31:06,458 - root - INFO - Epoch 000 | Total Loss: 2.4729 | Task Loss: 2.4729 | Val Acc: 0.3622
+2025-08-01 15:31:06,737 - root - INFO - Epoch 010 | Total Loss: 1.8897 | Task Loss: 1.8897 | Val Acc: 0.3796
+2025-08-01 15:31:06,978 - root - INFO - Epoch 020 | Total Loss: 1.8448 | Task Loss: 1.8448 | Val Acc: 0.3796
+2025-08-01 15:31:07,324 - root - INFO - Epoch 030 | Total Loss: 1.8287 | Task Loss: 1.8287 | Val Acc: 0.3796
+2025-08-01 15:31:07,674 - root - INFO - Epoch 040 | Total Loss: 1.8178 | Task Loss: 1.8178 | Val Acc: 0.3804
+2025-08-01 15:31:07,953 - root - INFO - Epoch 050 | Total Loss: 1.8085 | Task Loss: 1.8085 | Val Acc: 0.3804
+2025-08-01 15:31:08,195 - root - INFO - Epoch 060 | Total Loss: 1.7966 | Task Loss: 1.7966 | Val Acc: 0.3753
+2025-08-01 15:31:08,546 - root - INFO - Epoch 070 | Total Loss: 1.7750 | Task Loss: 1.7750 | Val Acc: 0.3782
+2025-08-01 15:31:08,893 - root - INFO - Epoch 080 | Total Loss: 1.8790 | Task Loss: 1.8790 | Val Acc: 0.3789
+2025-08-01 15:31:09,170 - root - INFO - Epoch 090 | Total Loss: 1.7587 | Task Loss: 1.7587 | Val Acc: 0.4022
+2025-08-01 15:31:09,414 - root - INFO - Epoch 100 | Total Loss: 1.6463 | Task Loss: 1.6463 | Val Acc: 0.4589
+2025-08-01 15:31:09,771 - root - INFO - Epoch 110 | Total Loss: 1.8142 | Task Loss: 1.8142 | Val Acc: 0.2625
+2025-08-01 15:31:10,109 - root - INFO - Epoch 120 | Total Loss: 1.6713 | Task Loss: 1.6713 | Val Acc: 0.3775
+2025-08-01 15:31:10,387 - root - INFO - Epoch 130 | Total Loss: 1.6406 | Task Loss: 1.6406 | Val Acc: 0.4276
+2025-08-01 15:31:10,630 - root - INFO - Epoch 140 | Total Loss: 1.5450 | Task Loss: 1.5450 | Val Acc: 0.4371
+2025-08-01 15:31:10,978 - root - INFO - Epoch 150 | Total Loss: 1.4824 | Task Loss: 1.4824 | Val Acc: 0.5091
+2025-08-01 15:31:11,326 - root - INFO - Epoch 160 | Total Loss: 1.5112 | Task Loss: 1.5112 | Val Acc: 0.3760
+2025-08-01 15:31:11,603 - root - INFO - Epoch 170 | Total Loss: 1.5421 | Task Loss: 1.5421 | Val Acc: 0.4575
+2025-08-01 15:31:11,845 - root - INFO - Epoch 180 | Total Loss: 1.4833 | Task Loss: 1.4833 | Val Acc: 0.5076
+2025-08-01 15:31:12,205 - root - INFO - Epoch 190 | Total Loss: 1.4432 | Task Loss: 1.4432 | Val Acc: 0.5207
+2025-08-01 15:31:12,522 - root - INFO - Epoch 199 | Total Loss: 1.4133 | Task Loss: 1.4133 | Val Acc: 0.5338
+2025-08-01 15:31:12,588 - root - INFO - 
+==================================================
+2025-08-01 15:31:12,588 - root - INFO - 📊 FINAL TEST RESULTS
+2025-08-01 15:31:12,588 - root - INFO - ==================================================
+2025-08-01 15:31:12,589 - root - INFO - ACCURACY    : 0.5175
+2025-08-01 15:31:12,589 - root - INFO - F1_MACRO    : 0.2441
+2025-08-01 15:31:12,589 - root - INFO - F1_MICRO    : 0.5175
+2025-08-01 15:31:12,589 - root - INFO - AUROC       : 0.7866
+2025-08-01 15:31:12,589 - root - INFO - SVD DIM REDUCTION: 767D → 100D
+2025-08-01 15:31:12,589 - root - INFO - EXPLAINED VARIANCE: 0.3395
+2025-08-01 15:31:12,589 - root - INFO - ==================================================
+2025-08-01 15:31:12,619 - __main__ - INFO - 💾 Results saved to: results/svd_applied/base/citeseer_to_cora_svd100_residual_mlp_baseline_20250801_153103_results.yaml
+2025-08-01 15:31:12,619 - root - INFO - ✅ Prompt tuning completed successfully!
+[0;32m[SEED 44][0m Completed successfully
+
+[0;34m[SEED 45][0m Starting experiment...
+2025-08-01 15:31:15,511 - __main__ - INFO - ==================================================
+2025-08-01 15:31:15,511 - __main__ - INFO - 🚀 EXPERIMENT CONFIGURATION
+2025-08-01 15:31:15,511 - __main__ - INFO - ==================================================
+2025-08-01 15:31:15,511 - __main__ - INFO - Experiment Type: cross_domain
+2025-08-01 15:31:15,511 - __main__ - INFO - Source Dataset: citeseer
+2025-08-01 15:31:15,511 - __main__ - INFO - Target Dataset: cora
+2025-08-01 15:31:15,511 - __main__ - INFO - Model: gcnii
+2025-08-01 15:31:15,511 - __main__ - INFO - Prompt Type: residual_mlp
+2025-08-01 15:31:15,511 - __main__ - INFO - Target-Centric: False
+2025-08-01 15:31:15,511 - __main__ - INFO - SVD Reduction: True
+2025-08-01 15:31:15,511 - __main__ - INFO - ==================================================
+2025-08-01 15:31:15,511 - root - INFO - Starting prompt tuning for run: citeseer_to_cora_svd100_residual_mlp_baseline_20250801_153115
+2025-08-01 15:31:15,511 - root - INFO - Starting cross-domain prompt tuning on target dataset with SVD...
+2025-08-01 15:31:15,515 - datasets.manager - INFO - Loading cross-domain datasets: citeseer → computers
+2025-08-01 15:31:15,515 - datasets.loaders - INFO - Loading citeseer dataset...
+2025-08-01 15:31:15,590 - datasets.loaders - INFO - ✅ Loaded citeseer: DatasetInfo(name='citeseer', features=3703, classes=6, nodes=3327)
+2025-08-01 15:31:15,592 - datasets.loaders - INFO - Loading computers dataset...
+2025-08-01 15:31:17,696 - datasets.loaders - INFO - ✅ Loaded computers: DatasetInfo(name='computers', features=767, classes=10, nodes=13752)
+2025-08-01 15:31:17,699 - datasets.base - INFO - Created splits: train=9627, val=1375, test=2750
+2025-08-01 15:31:17,701 - datasets.base - INFO - Class distribution:
+2025-08-01 15:31:17,701 - datasets.base - INFO -   Train: {0: 313, 1: 1463, 2: 992, 3: 373, 4: 3621, 5: 205, 6: 351, 7: 567, 8: 1549, 9: 193}
+2025-08-01 15:31:17,701 - datasets.base - INFO -   Val: {0: 38, 1: 204, 2: 145, 3: 58, 4: 522, 5: 41, 6: 42, 7: 77, 8: 211, 9: 37}
+2025-08-01 15:31:17,701 - datasets.base - INFO -   Test: {0: 85, 1: 475, 2: 277, 3: 111, 4: 1015, 5: 62, 6: 94, 7: 174, 8: 396, 9: 61}
+2025-08-01 15:31:17,701 - datasets.manager - INFO - Applying SVD reduction: 3703D → 100D
+2025-08-01 15:31:17,701 - datasets.manager - INFO - Creating new SVD reducer
+2025-08-01 15:31:17,701 - core.svd_reducer - INFO - Fitting SVD: 3703D → 100D
+2025-08-01 15:31:17,833 - core.svd_reducer - INFO - ✅ SVD fitted successfully
+2025-08-01 15:31:17,834 - core.svd_reducer - INFO -    Components: 100
+2025-08-01 15:31:17,834 - core.svd_reducer - INFO -    Explained variance: 0.3395
+2025-08-01 15:31:17,837 - core.svd_reducer - INFO - 💾 SVD reducer saved: checkpoints/citeseer_svd_reducer.pkl
+2025-08-01 15:31:17,866 - datasets.manager - INFO - ✅ SVD reduction applied. Explained variance: 0.3395
+2025-08-01 15:31:17,869 - datasets.manager - INFO - Applying source SVD to target dataset: 767D → 100D
+2025-08-01 15:31:17,872 - core.svd_reducer - WARNING - Input dimension 767 < original 3703, zero-padding
+2025-08-01 15:31:18,107 - datasets.manager - INFO - ✅ SVD alignment completed between source and target
+2025-08-01 15:31:18,107 - datasets.base - ERROR - Number of classes differs: source=6, target=10
+2025-08-01 15:31:18,108 - datasets.manager - INFO - ✅ Cross-domain datasets loaded:
+2025-08-01 15:31:18,108 - datasets.manager - INFO -    Source: DatasetInfo(name='citeseer', features=100, classes=6, nodes=3327)
+2025-08-01 15:31:18,108 - datasets.manager - INFO -    Target: DatasetInfo(name='computers', features=100, classes=10, nodes=13752)
+2025-08-01 15:31:18,108 - datasets.base - ERROR - Number of classes differs: source=6, target=10
+2025-08-01 15:31:18,311 - root - INFO - 🔧 Prompt tuning with SVD-aligned features:
+2025-08-01 15:31:18,311 - root - INFO -    Original target dimension: 767
+2025-08-01 15:31:18,311 - root - INFO -    Aligned dimension: 100
+2025-08-01 15:31:18,311 - root - INFO -    SVD explained variance: 0.3395
+2025-08-01 15:31:18,314 - root - INFO - ✅ Dimension verification passed: 100D
+2025-08-01 15:31:18,338 - models.architectures - INFO - Created GCNII model with 96,128 parameters
+2025-08-01 15:31:18,455 - __main__ - INFO - ✅ Loaded checkpoint from checkpoints/citeseer_encoder_final.pt
+2025-08-01 15:31:18,455 - root - INFO - ✅ Loaded pretrained encoder (frozen) with perfect dimension alignment
+2025-08-01 15:31:18,455 - models.base - INFO - 
+📊 Encoder Information:
+2025-08-01 15:31:18,455 - models.base - INFO -    Total parameters: 0
+2025-08-01 15:31:18,455 - models.base - INFO -    Model size: 0.00 MB
+2025-08-01 15:31:18,455 - models.base - INFO -    Module breakdown:
+2025-08-01 15:31:18,455 - models.base - INFO -      lin_in: 0 parameters
+2025-08-01 15:31:18,455 - models.base - INFO -      convs: 0 parameters
+2025-08-01 15:31:18,455 - models.base - INFO -      dropout_layer: 0 parameters
+2025-08-01 15:31:18,455 - models.base - INFO -      layer_norms: 0 parameters
+2025-08-01 15:31:18,455 - models.base - INFO -    Architecture: GCNIIEncoder
+2025-08-01 15:31:18,455 - models.base - INFO -    Input/Hidden dims: 100/128
+2025-08-01 15:31:18,455 - models.base - INFO -    Layers: 5
+2025-08-01 15:31:18,456 - root - INFO - Created ResidualMLPPrompt with hidden_dim=64, num_layers=2, dropout=0.1
+2025-08-01 15:31:18,458 - models.base - INFO - 
+📊 Prompt Information:
+2025-08-01 15:31:18,458 - models.base - INFO -    Total parameters: 13,164
+2025-08-01 15:31:18,458 - models.base - INFO -    Model size: 0.05 MB
+2025-08-01 15:31:18,458 - models.base - INFO -    Module breakdown:
+2025-08-01 15:31:18,458 - models.base - INFO -      mlp: 12,964 parameters
+2025-08-01 15:31:18,458 - models.base - INFO -      norm: 200 parameters
+2025-08-01 15:31:18,458 - models.base - INFO - 
+📊 Classifier Information:
+2025-08-01 15:31:18,458 - models.base - INFO -    Total parameters: 1,290
+2025-08-01 15:31:18,458 - models.base - INFO -    Model size: 0.00 MB
+2025-08-01 15:31:18,458 - models.base - INFO -    Module breakdown:
+2025-08-01 15:31:18,458 - models.base - INFO -      classifier: 1,290 parameters
+2025-08-01 15:31:18,474 - root - INFO - Training data: 9627 nodes
+2025-08-01 15:31:18,474 - root - INFO - Validation data: 1375 nodes
+2025-08-01 15:31:18,474 - root - INFO - Test data: 2750 nodes
+2025-08-01 15:31:18,820 - root - INFO - Epoch 000 | Total Loss: 2.4809 | Task Loss: 2.4809 | Val Acc: 0.0815
+2025-08-01 15:31:19,170 - root - INFO - Epoch 010 | Total Loss: 1.9382 | Task Loss: 1.9382 | Val Acc: 0.3724
+2025-08-01 15:31:19,431 - root - INFO - Epoch 020 | Total Loss: 1.8823 | Task Loss: 1.8823 | Val Acc: 0.3796
+2025-08-01 15:31:19,675 - root - INFO - Epoch 030 | Total Loss: 1.8431 | Task Loss: 1.8431 | Val Acc: 0.3796
+2025-08-01 15:31:20,024 - root - INFO - Epoch 040 | Total Loss: 1.8247 | Task Loss: 1.8247 | Val Acc: 0.3796
+2025-08-01 15:31:20,373 - root - INFO - Epoch 050 | Total Loss: 1.8041 | Task Loss: 1.8041 | Val Acc: 0.3753
+2025-08-01 15:31:20,649 - root - INFO - Epoch 060 | Total Loss: 1.8539 | Task Loss: 1.8539 | Val Acc: 0.3796
+2025-08-01 15:31:20,893 - root - INFO - Epoch 070 | Total Loss: 1.8323 | Task Loss: 1.8323 | Val Acc: 0.3804
+2025-08-01 15:31:21,243 - root - INFO - Epoch 080 | Total Loss: 1.7796 | Task Loss: 1.7796 | Val Acc: 0.3775
+2025-08-01 15:31:21,589 - root - INFO - Epoch 090 | Total Loss: 1.9571 | Task Loss: 1.9571 | Val Acc: 0.3775
+2025-08-01 15:31:21,867 - root - INFO - Epoch 100 | Total Loss: 1.8494 | Task Loss: 1.8494 | Val Acc: 0.3665
+2025-08-01 15:31:22,110 - root - INFO - Epoch 110 | Total Loss: 1.8125 | Task Loss: 1.8125 | Val Acc: 0.3724
+2025-08-01 15:31:22,451 - root - INFO - Epoch 120 | Total Loss: 1.8068 | Task Loss: 1.8068 | Val Acc: 0.3760
+2025-08-01 15:31:22,804 - root - INFO - Epoch 130 | Total Loss: 1.7605 | Task Loss: 1.7605 | Val Acc: 0.3753
+2025-08-01 15:31:23,080 - root - INFO - Epoch 140 | Total Loss: 1.6842 | Task Loss: 1.6842 | Val Acc: 0.3811
+2025-08-01 15:31:23,322 - root - INFO - Epoch 150 | Total Loss: 1.6702 | Task Loss: 1.6702 | Val Acc: 0.3760
+2025-08-01 15:31:23,674 - root - INFO - Epoch 160 | Total Loss: 1.7402 | Task Loss: 1.7402 | Val Acc: 0.3782
+2025-08-01 15:31:24,021 - root - INFO - Epoch 170 | Total Loss: 1.6512 | Task Loss: 1.6512 | Val Acc: 0.4538
+2025-08-01 15:31:24,296 - root - INFO - Epoch 180 | Total Loss: 1.5679 | Task Loss: 1.5679 | Val Acc: 0.4698
+2025-08-01 15:31:24,537 - root - INFO - Epoch 190 | Total Loss: 1.5135 | Task Loss: 1.5135 | Val Acc: 0.3993
+2025-08-01 15:31:24,846 - root - INFO - Epoch 199 | Total Loss: 1.7347 | Task Loss: 1.7347 | Val Acc: 0.3869
+2025-08-01 15:31:24,899 - root - INFO - 
+==================================================
+2025-08-01 15:31:24,899 - root - INFO - 📊 FINAL TEST RESULTS
+2025-08-01 15:31:24,899 - root - INFO - ==================================================
+2025-08-01 15:31:24,899 - root - INFO - ACCURACY    : 0.3902
+2025-08-01 15:31:24,899 - root - INFO - F1_MACRO    : 0.0966
+2025-08-01 15:31:24,899 - root - INFO - F1_MICRO    : 0.3902
+2025-08-01 15:31:24,899 - root - INFO - AUROC       : 0.7040
+2025-08-01 15:31:24,899 - root - INFO - SVD DIM REDUCTION: 767D → 100D
+2025-08-01 15:31:24,899 - root - INFO - EXPLAINED VARIANCE: 0.3395
+2025-08-01 15:31:24,899 - root - INFO - ==================================================
+2025-08-01 15:31:24,930 - __main__ - INFO - 💾 Results saved to: results/svd_applied/base/citeseer_to_cora_svd100_residual_mlp_baseline_20250801_153115_results.yaml
+2025-08-01 15:31:24,930 - root - INFO - ✅ Prompt tuning completed successfully!
+[0;32m[SEED 45][0m Completed successfully
+
+[0;34m[SEED 46][0m Starting experiment...
+2025-08-01 15:31:27,800 - __main__ - INFO - ==================================================
+2025-08-01 15:31:27,800 - __main__ - INFO - 🚀 EXPERIMENT CONFIGURATION
+2025-08-01 15:31:27,800 - __main__ - INFO - ==================================================
+2025-08-01 15:31:27,800 - __main__ - INFO - Experiment Type: cross_domain
+2025-08-01 15:31:27,800 - __main__ - INFO - Source Dataset: citeseer
+2025-08-01 15:31:27,800 - __main__ - INFO - Target Dataset: cora
+2025-08-01 15:31:27,800 - __main__ - INFO - Model: gcnii
+2025-08-01 15:31:27,800 - __main__ - INFO - Prompt Type: residual_mlp
+2025-08-01 15:31:27,800 - __main__ - INFO - Target-Centric: False
+2025-08-01 15:31:27,800 - __main__ - INFO - SVD Reduction: True
+2025-08-01 15:31:27,800 - __main__ - INFO - ==================================================
+2025-08-01 15:31:27,800 - root - INFO - Starting prompt tuning for run: citeseer_to_cora_svd100_residual_mlp_baseline_20250801_153127
+2025-08-01 15:31:27,800 - root - INFO - Starting cross-domain prompt tuning on target dataset with SVD...
+2025-08-01 15:31:27,804 - datasets.manager - INFO - Loading cross-domain datasets: citeseer → computers
+2025-08-01 15:31:27,804 - datasets.loaders - INFO - Loading citeseer dataset...
+2025-08-01 15:31:27,879 - datasets.loaders - INFO - ✅ Loaded citeseer: DatasetInfo(name='citeseer', features=3703, classes=6, nodes=3327)
+2025-08-01 15:31:27,881 - datasets.loaders - INFO - Loading computers dataset...
+2025-08-01 15:31:29,995 - datasets.loaders - INFO - ✅ Loaded computers: DatasetInfo(name='computers', features=767, classes=10, nodes=13752)
+2025-08-01 15:31:29,998 - datasets.base - INFO - Created splits: train=9627, val=1375, test=2750
+2025-08-01 15:31:30,000 - datasets.base - INFO - Class distribution:
+2025-08-01 15:31:30,000 - datasets.base - INFO -   Train: {0: 313, 1: 1463, 2: 992, 3: 373, 4: 3621, 5: 205, 6: 351, 7: 567, 8: 1549, 9: 193}
+2025-08-01 15:31:30,000 - datasets.base - INFO -   Val: {0: 38, 1: 204, 2: 145, 3: 58, 4: 522, 5: 41, 6: 42, 7: 77, 8: 211, 9: 37}
+2025-08-01 15:31:30,000 - datasets.base - INFO -   Test: {0: 85, 1: 475, 2: 277, 3: 111, 4: 1015, 5: 62, 6: 94, 7: 174, 8: 396, 9: 61}
+2025-08-01 15:31:30,000 - datasets.manager - INFO - Applying SVD reduction: 3703D → 100D
+2025-08-01 15:31:30,000 - datasets.manager - INFO - Creating new SVD reducer
+2025-08-01 15:31:30,001 - core.svd_reducer - INFO - Fitting SVD: 3703D → 100D
+2025-08-01 15:31:30,135 - core.svd_reducer - INFO - ✅ SVD fitted successfully
+2025-08-01 15:31:30,135 - core.svd_reducer - INFO -    Components: 100
+2025-08-01 15:31:30,135 - core.svd_reducer - INFO -    Explained variance: 0.3395
+2025-08-01 15:31:30,138 - core.svd_reducer - INFO - 💾 SVD reducer saved: checkpoints/citeseer_svd_reducer.pkl
+2025-08-01 15:31:30,167 - datasets.manager - INFO - ✅ SVD reduction applied. Explained variance: 0.3395
+2025-08-01 15:31:30,170 - datasets.manager - INFO - Applying source SVD to target dataset: 767D → 100D
+2025-08-01 15:31:30,173 - core.svd_reducer - WARNING - Input dimension 767 < original 3703, zero-padding
+2025-08-01 15:31:30,411 - datasets.manager - INFO - ✅ SVD alignment completed between source and target
+2025-08-01 15:31:30,411 - datasets.base - ERROR - Number of classes differs: source=6, target=10
+2025-08-01 15:31:30,412 - datasets.manager - INFO - ✅ Cross-domain datasets loaded:
+2025-08-01 15:31:30,412 - datasets.manager - INFO -    Source: DatasetInfo(name='citeseer', features=100, classes=6, nodes=3327)
+2025-08-01 15:31:30,412 - datasets.manager - INFO -    Target: DatasetInfo(name='computers', features=100, classes=10, nodes=13752)
+2025-08-01 15:31:30,412 - datasets.base - ERROR - Number of classes differs: source=6, target=10
+2025-08-01 15:31:30,557 - root - INFO - 🔧 Prompt tuning with SVD-aligned features:
+2025-08-01 15:31:30,557 - root - INFO -    Original target dimension: 767
+2025-08-01 15:31:30,557 - root - INFO -    Aligned dimension: 100
+2025-08-01 15:31:30,557 - root - INFO -    SVD explained variance: 0.3395
+2025-08-01 15:31:30,559 - root - INFO - ✅ Dimension verification passed: 100D
+2025-08-01 15:31:30,583 - models.architectures - INFO - Created GCNII model with 96,128 parameters
+2025-08-01 15:31:30,636 - __main__ - INFO - ✅ Loaded checkpoint from checkpoints/citeseer_encoder_final.pt
+2025-08-01 15:31:30,636 - root - INFO - ✅ Loaded pretrained encoder (frozen) with perfect dimension alignment
+2025-08-01 15:31:30,636 - models.base - INFO - 
+📊 Encoder Information:
+2025-08-01 15:31:30,636 - models.base - INFO -    Total parameters: 0
+2025-08-01 15:31:30,636 - models.base - INFO -    Model size: 0.00 MB
+2025-08-01 15:31:30,636 - models.base - INFO -    Module breakdown:
+2025-08-01 15:31:30,636 - models.base - INFO -      lin_in: 0 parameters
+2025-08-01 15:31:30,636 - models.base - INFO -      convs: 0 parameters
+2025-08-01 15:31:30,636 - models.base - INFO -      dropout_layer: 0 parameters
+2025-08-01 15:31:30,636 - models.base - INFO -      layer_norms: 0 parameters
+2025-08-01 15:31:30,636 - models.base - INFO -    Architecture: GCNIIEncoder
+2025-08-01 15:31:30,636 - models.base - INFO -    Input/Hidden dims: 100/128
+2025-08-01 15:31:30,636 - models.base - INFO -    Layers: 5
+2025-08-01 15:31:30,636 - root - INFO - Created ResidualMLPPrompt with hidden_dim=64, num_layers=2, dropout=0.1
+2025-08-01 15:31:30,655 - models.base - INFO - 
+📊 Prompt Information:
+2025-08-01 15:31:30,655 - models.base - INFO -    Total parameters: 13,164
+2025-08-01 15:31:30,655 - models.base - INFO -    Model size: 0.05 MB
+2025-08-01 15:31:30,655 - models.base - INFO -    Module breakdown:
+2025-08-01 15:31:30,655 - models.base - INFO -      mlp: 12,964 parameters
+2025-08-01 15:31:30,655 - models.base - INFO -      norm: 200 parameters
+2025-08-01 15:31:30,655 - models.base - INFO - 
+📊 Classifier Information:
+2025-08-01 15:31:30,655 - models.base - INFO -    Total parameters: 1,290
+2025-08-01 15:31:30,655 - models.base - INFO -    Model size: 0.00 MB
+2025-08-01 15:31:30,655 - models.base - INFO -    Module breakdown:
+2025-08-01 15:31:30,655 - models.base - INFO -      classifier: 1,290 parameters
+2025-08-01 15:31:30,675 - root - INFO - Training data: 9627 nodes
+2025-08-01 15:31:30,677 - root - INFO - Validation data: 1375 nodes
+2025-08-01 15:31:30,679 - root - INFO - Test data: 2750 nodes
+2025-08-01 15:31:31,030 - root - INFO - Epoch 000 | Total Loss: 2.6307 | Task Loss: 2.6307 | Val Acc: 0.3796
+2025-08-01 15:31:31,263 - root - INFO - Epoch 010 | Total Loss: 1.8719 | Task Loss: 1.8719 | Val Acc: 0.3796
+2025-08-01 15:31:31,504 - root - INFO - Epoch 020 | Total Loss: 1.8411 | Task Loss: 1.8411 | Val Acc: 0.3796
+2025-08-01 15:31:31,865 - root - INFO - Epoch 030 | Total Loss: 1.8243 | Task Loss: 1.8243 | Val Acc: 0.3796
+2025-08-01 15:31:32,221 - root - INFO - Epoch 040 | Total Loss: 1.8113 | Task Loss: 1.8113 | Val Acc: 0.3804
+2025-08-01 15:31:32,467 - root - INFO - Epoch 050 | Total Loss: 1.8021 | Task Loss: 1.8021 | Val Acc: 0.3775
+2025-08-01 15:31:32,711 - root - INFO - Epoch 060 | Total Loss: 1.7829 | Task Loss: 1.7829 | Val Acc: 0.3796
+2025-08-01 15:31:33,072 - root - INFO - Epoch 070 | Total Loss: 1.7837 | Task Loss: 1.7837 | Val Acc: 0.3796
+2025-08-01 15:31:33,433 - root - INFO - Epoch 080 | Total Loss: 1.8158 | Task Loss: 1.8158 | Val Acc: 0.3789
+2025-08-01 15:31:33,682 - root - INFO - Epoch 090 | Total Loss: 1.7966 | Task Loss: 1.7966 | Val Acc: 0.3796
+2025-08-01 15:31:33,925 - root - INFO - Epoch 100 | Total Loss: 1.7704 | Task Loss: 1.7704 | Val Acc: 0.3913
+2025-08-01 15:31:34,286 - root - INFO - Epoch 110 | Total Loss: 2.0504 | Task Loss: 2.0504 | Val Acc: 0.3789
+2025-08-01 15:31:34,645 - root - INFO - Epoch 120 | Total Loss: 1.7814 | Task Loss: 1.7814 | Val Acc: 0.3796
+2025-08-01 15:31:34,893 - root - INFO - Epoch 130 | Total Loss: 1.7804 | Task Loss: 1.7804 | Val Acc: 0.3796
+2025-08-01 15:31:35,136 - root - INFO - Epoch 140 | Total Loss: 1.7736 | Task Loss: 1.7736 | Val Acc: 0.3767
+2025-08-01 15:31:35,493 - root - INFO - Epoch 150 | Total Loss: 1.7525 | Task Loss: 1.7525 | Val Acc: 0.3993
+2025-08-01 15:31:35,848 - root - INFO - Epoch 160 | Total Loss: 1.7292 | Task Loss: 1.7292 | Val Acc: 0.4007
+2025-08-01 15:31:36,103 - root - INFO - Epoch 170 | Total Loss: 1.6957 | Task Loss: 1.6957 | Val Acc: 0.4225
+2025-08-01 15:31:36,348 - root - INFO - Epoch 180 | Total Loss: 1.7166 | Task Loss: 1.7166 | Val Acc: 0.4044
+2025-08-01 15:31:36,705 - root - INFO - Epoch 190 | Total Loss: 1.7264 | Task Loss: 1.7264 | Val Acc: 0.3767
+2025-08-01 15:31:37,017 - root - INFO - Epoch 199 | Total Loss: 1.6915 | Task Loss: 1.6915 | Val Acc: 0.4349
+2025-08-01 15:31:37,078 - root - INFO - 
+==================================================
+2025-08-01 15:31:37,078 - root - INFO - 📊 FINAL TEST RESULTS
+2025-08-01 15:31:37,078 - root - INFO - ==================================================
+2025-08-01 15:31:37,078 - root - INFO - ACCURACY    : 0.4178
+2025-08-01 15:31:37,078 - root - INFO - F1_MACRO    : 0.1053
+2025-08-01 15:31:37,078 - root - INFO - F1_MICRO    : 0.4178
+2025-08-01 15:31:37,078 - root - INFO - AUROC       : 0.6766
+2025-08-01 15:31:37,078 - root - INFO - SVD DIM REDUCTION: 767D → 100D
+2025-08-01 15:31:37,078 - root - INFO - EXPLAINED VARIANCE: 0.3395
+2025-08-01 15:31:37,078 - root - INFO - ==================================================
+2025-08-01 15:31:37,113 - __main__ - INFO - 💾 Results saved to: results/svd_applied/base/citeseer_to_cora_svd100_residual_mlp_baseline_20250801_153127_results.yaml
+2025-08-01 15:31:37,113 - root - INFO - ✅ Prompt tuning completed successfully!
+[0;32m[SEED 46][0m Completed successfully
+
+[0;32mAll experiments completed![0m

@@ -14,7 +14,7 @@ from utils import (
 )
 from models import create_model, Classifier
 from datasets import load_dataset, validate_cross_domain_compatibility
-# from prompts.gpf_prompt import GPFPrompt, ResidualMLPPrompt  # 주석 처리
+# from prompts.prompt_function import GPFPrompt, ResidualMLPPrompt  # 주석 처리
 from losses import TargetCentricLoss
 from anchor_factory import generate_gaussian_anchors
 

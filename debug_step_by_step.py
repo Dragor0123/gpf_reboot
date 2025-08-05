@@ -18,7 +18,7 @@ from utils import (
 )
 from models import create_model, Classifier
 from datasets import load_dataset
-from prompts.gpf_prompt import GPFPrompt
+from prompts.prompt_function import GPFPrompt
 from losses import TargetCentricLoss
 
 

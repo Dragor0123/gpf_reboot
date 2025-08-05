@@ -4,15 +4,16 @@ import torch.nn.functional as F
 from tqdm import tqdm
 import logging
 from pathlib import Path
+import yaml
+import datetime
 
-from utils import (
-    set_seed, get_device, load_config,
-    setup_logging, log_experiment_info,
-    save_ckpt, create_run_name
-)
-from models import create_model
-from models.encoders import ProjectionHead
-from datasets import load_dataset
+# Import from refactored modules
+from core.config import ConfigManager
+from core.device import device_manager
+from core.logging import setup_logging, get_logger
+from core.reproducibility import set_reproducible_seeds
+from models import create_model, ProjectionHead
+from datasets import DatasetManager
 from torch_geometric.data import Data
 
 
@@ -133,20 +134,22 @@ def pretrain_on_data(config, data, dataset_info, experiment_type, svd_reducer=No
     Returns:
         Trained encoder
     """
-    device = get_device(config['experiment']['device'])
+    device = device_manager.get_device(config['experiment']['device'])
     data = data.to(device)
     
     # Log SVD information
-    if svd_reducer and dataset_info['svd_applied']:
+    if svd_reducer and dataset_info.svd_applied:
         logging.info(f"🔧 Pre-training with SVD-reduced features:")
-        logging.info(f"   Original dimension: {dataset_info['original_num_features']}")
-        logging.info(f"   Reduced dimension: {dataset_info['num_features']}")
-        logging.info(f"   Explained variance: {dataset_info['svd_info']['explained_variance_ratio']:.4f}")
+        logging.info(f"   Original dimension: {dataset_info.original_num_features}")
+        logging.info(f"   Reduced dimension: {dataset_info.num_features}")
+        svd_info = getattr(dataset_info, 'svd_info', None)
+        if svd_info:
+            logging.info(f"   Explained variance: {svd_info['explained_variance_ratio']:.4f}")
     
     # Model + Projection Head (using SVD-reduced dimension)
     encoder = create_model(
         model_type=config['model']['type'],
-        input_dim=dataset_info['num_features'],  # SVD-reduced dimension
+        input_dim=dataset_info.num_features,  # SVD-reduced dimension
         hidden_dim=config['model']['hidden_dim'],
         num_layers=config['model']['num_layers'],
         dropout=config['model']['dropout']
@@ -172,9 +175,9 @@ def pretrain_on_data(config, data, dataset_info, experiment_type, svd_reducer=No
     temperature = aug_config['temperature']
 
     logging.info("Starting GCL-style contrastive pretraining...")
-    logging.info(f"Dataset: {dataset_info['dataset_name']}")
+    logging.info(f"Dataset: {dataset_info.name}")
     logging.info(f"Nodes: {data.num_nodes}, Edges: {data.num_edges}")
-    logging.info(f"Features: {dataset_info['num_features']} (SVD-reduced)")
+    logging.info(f"Features: {dataset_info.num_features} (SVD-reduced)")
     
     # Training loop
     encoder.train()
@@ -210,16 +213,20 @@ def pretrain_on_data(config, data, dataset_info, experiment_type, svd_reducer=No
     
     # Include SVD information in checkpoint
     checkpoint_info = {
-        'dataset_info': dataset_info,
+        'dataset_info': {
+            'name': dataset_info.name,
+            'num_features': dataset_info.num_features,
+            'num_classes': dataset_info.num_classes,
+            'original_num_features': dataset_info.original_num_features,
+            'svd_applied': dataset_info.svd_applied,
+            'svd_info': getattr(dataset_info, 'svd_info', None)
+        },
         'experiment_type': experiment_type,
         'config': config,
         'svd_reducer_path': f"checkpoints/{source_dataset}_svd_reducer.pkl" if svd_reducer else None
     }
     
-    save_ckpt(
-        encoder, optimizer, epoch, loss.item(), save_path,
-        **checkpoint_info
-    )
+    save_checkpoint(encoder, optimizer, epoch, loss.item(), save_path, checkpoint_info)
     
     logging.info(f"Pretraining complete. Model saved to: {save_path}")
     if svd_reducer:
@@ -228,6 +235,78 @@ def pretrain_on_data(config, data, dataset_info, experiment_type, svd_reducer=No
     return encoder
 
 
+def load_config(config_path):
+    """Load configuration from YAML file."""
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    return config
+
+def set_seed(seed):
+    """Set random seeds for reproducibility."""
+    set_reproducible_seeds(seed)
+
+def log_experiment_info(config):
+    """Log experiment configuration."""
+    logger = get_logger(__name__)
+    logger.info("=" * 50)
+    logger.info("🚀 PRETRAINING CONFIGURATION")
+    logger.info("=" * 50)
+    logger.info(f"Experiment Type: {config['experiment']['type']}")
+    if config['experiment']['type'] == 'cross_domain':
+        logger.info(f"Source Dataset: {config['experiment']['source_dataset']}")
+    else:
+        logger.info(f"Dataset: {config['dataset']['name']}")
+    logger.info(f"Model: {config['model']['type']}")
+    logger.info(f"SVD Reduction: {config['feature_reduction']['enable']}")
+    logger.info("=" * 50)
+
+def create_run_name(config):
+    """Create a unique run name based on configuration."""
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    if config['experiment']['type'] == 'cross_domain':
+        source = config['experiment']['source_dataset']
+        name_parts = [f"{source}_pretrain"]
+    else:
+        name_parts = [f"{config['dataset']['name']}_pretrain"]
+    
+    if config['feature_reduction']['enable']:
+        name_parts.append(f"svd{config['feature_reduction']['target_dim']}")
+    
+    name_parts.append(timestamp)
+    return "_".join(name_parts)
+
+def save_checkpoint(model, optimizer, epoch, loss, save_path, extra_info=None):
+    """Save model checkpoint."""
+    Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+    
+    checkpoint = {
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'epoch': epoch,
+        'loss': loss,
+    }
+    
+    if extra_info:
+        checkpoint.update(extra_info)
+    
+    torch.save(checkpoint, save_path)
+    logger = get_logger(__name__)
+    logger.info(f"✅ Checkpoint saved to: {save_path}")
+
+def load_dataset(config):
+    """Load dataset based on experiment configuration."""
+    from core.config import ConfigManager
+    config_manager = ConfigManager()
+    experiment_config = config_manager.load_config("config.yaml")
+    
+    dataset_manager = DatasetManager(experiment_config)
+    
+    if config['experiment']['type'] == 'single_domain':
+        return dataset_manager.load_single_domain_dataset()
+    else:
+        return dataset_manager.load_cross_domain_datasets()
+
 def main():
     """
     Main pretraining function.
@@ -235,7 +314,7 @@ def main():
     # Load configuration
     config = load_config("config.yaml")
     set_seed(config['experiment']['seed'])
-    device = get_device(config['experiment']['device'])
+    device = device_manager.get_device(config['experiment']['device'])
     setup_logging(config['experiment']['log_level'])
     log_experiment_info(config)
     

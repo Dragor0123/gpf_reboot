@@ -6,17 +6,19 @@ from pathlib import Path
 from sklearn.metrics import f1_score, roc_auc_score, accuracy_score
 import numpy as np
 
-from utils import (
-    set_seed, get_device, load_config,
-    setup_logging, log_experiment_info,
-    load_ckpt, EarlyStopping,
-    save_results, create_run_name, print_model_info
-)
-from models import create_model, Classifier
-from datasets import load_dataset, validate_cross_domain_compatibility
-from prompts.gpf_prompt import GPFPrompt, ResidualMLPPrompt
-from losses import TargetCentricLoss
+# Import from refactored modules
+from core.config import ConfigManager
+from core.device import device_manager
+from core.logging import setup_logging, get_logger
+from core.reproducibility import set_reproducible_seeds
+from models import create_model, Classifier, print_model_info
+from datasets import DatasetManager, validate_cross_domain_compatibility
+from prompts.prompt_function import GPFPrompt, ResidualMLPPrompt, LinearPrompt
+from training.losses import TargetCentricLoss
 from anchor_factory import generate_gaussian_anchors, generate_mog_anchors, generate_mog_anchors_simple
+import yaml
+import datetime
+import os
 
 
 def evaluate_model(encoder, prompt, classifier, data, mask, device, return_embeddings=False):
@@ -113,6 +115,207 @@ def train_cross_domain(config):
     return train_on_target_data(config, target_data, target_info, "cross_domain", source_svd_reducer)
 
 
+def create_prompt(config, input_dim):
+    """Create prompt based on configuration.
+    
+    Args:
+        config: Configuration dictionary
+        input_dim: Input feature dimension
+        
+    Returns:
+        Prompt module
+    """
+    prompt_config = config['prompt']
+    prompt_type = prompt_config['type'].lower()
+    
+    if prompt_type == 'gpf':
+        gpf_config = prompt_config['gpf']
+        prompt = GPFPrompt(
+            input_dim=input_dim,
+            p_num=gpf_config['num_prompts']
+        )
+        logging.info(f"Created GPFPrompt with {gpf_config['num_prompts']} prompts")
+        
+    elif prompt_type == 'residual_mlp':
+        mlp_config = prompt_config['residual_mlp']
+        prompt = ResidualMLPPrompt(
+            input_dim=input_dim,
+            hidden_dim=mlp_config['hidden_dim'],
+            num_layers=mlp_config['num_layers'],
+            dropout=mlp_config['dropout']
+        )
+        logging.info(f"Created ResidualMLPPrompt with hidden_dim={mlp_config['hidden_dim']}, "
+                    f"num_layers={mlp_config['num_layers']}, dropout={mlp_config['dropout']}")
+        
+    elif prompt_type == 'linear':
+        linear_config = prompt_config['linear']
+        out_channels = linear_config.get('out_channels', None)
+        prompt = LinearPrompt(
+            in_channels=input_dim,
+            out_channels=out_channels
+        )
+        effective_out_channels = out_channels if out_channels is not None else input_dim
+        logging.info(f"Created LinearPrompt with in_channels={input_dim}, out_channels={effective_out_channels}")
+        
+    else:
+        raise ValueError(f"Unknown prompt type: {prompt_type}. Supported types: 'gpf', 'residual_mlp', 'linear'")
+    
+    return prompt
+
+
+def load_config(config_path):
+    """Load configuration from YAML file."""
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    return config
+
+
+def set_seed(seed):
+    """Set random seeds for reproducibility."""
+    set_reproducible_seeds(seed)
+
+
+def log_experiment_info(config):
+    """Log experiment configuration."""
+    logger = get_logger(__name__)
+    logger.info("=" * 50)
+    logger.info("🚀 EXPERIMENT CONFIGURATION")
+    logger.info("=" * 50)
+    logger.info(f"Experiment Type: {config['experiment']['type']}")
+    if config['experiment']['type'] == 'cross_domain':
+        logger.info(f"Source Dataset: {config['experiment']['source_dataset']}")
+        logger.info(f"Target Dataset: {config['experiment']['target_dataset']}")
+    else:
+        logger.info(f"Dataset: {config['dataset']['name']}")
+    logger.info(f"Model: {config['model']['type']}")
+    logger.info(f"Prompt Type: {config['prompt']['type']}")
+    logger.info(f"Target-Centric: {config['target_centric']['enable']}")
+    logger.info(f"SVD Reduction: {config['feature_reduction']['enable']}")
+    logger.info("=" * 50)
+
+
+def create_run_name(config):
+    """Create a unique run name based on configuration."""
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    if config['experiment']['type'] == 'cross_domain':
+        source = config['experiment']['source_dataset']
+        target = config['experiment']['target_dataset']
+        name_parts = [f"{source}_to_{target}"]
+    else:
+        name_parts = [config['dataset']['name']]
+    
+    # Add SVD info
+    if config['feature_reduction']['enable']:
+        name_parts.append(f"svd{config['feature_reduction']['target_dim']}")
+    
+    # Add prompt type
+    name_parts.append(config['prompt']['type'])
+    
+    # Add target-centric info
+    if config['target_centric']['enable']:
+        reg_type = config['target_centric']['regularization']['divergence']['type']
+        beta = config['target_centric']['regularization']['beta']
+        name_parts.append(f"tc_{reg_type}_{beta}")
+    else:
+        name_parts.append("baseline")
+    
+    name_parts.append(timestamp)
+    
+    return "_".join(name_parts)
+
+
+def save_results(results, config):
+    """Save experiment results to file."""
+    results_dir = Path(config['evaluation']['results_dir'])
+    results_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Create subdirectory based on experiment type
+    if config['feature_reduction']['enable']:
+        subdir = "svd_applied"
+    else:
+        subdir = "no_svd"
+    
+    if config['target_centric']['enable']:
+        anchor_type = config['target_centric']['regularization']['anchor']['type']
+        if anchor_type in ['gaussian', 'mog']:
+            subdir = os.path.join(subdir, f"{anchor_type}_anchor")
+        else:
+            subdir = os.path.join(subdir, "target_centric")
+    else:
+        subdir = os.path.join(subdir, "base")
+    
+    save_dir = results_dir / subdir
+    save_dir.mkdir(parents=True, exist_ok=True)
+    
+    run_name = config['experiment']['run_name']
+    results_file = save_dir / f"{run_name}_results.yaml"
+    
+    with open(results_file, 'w') as f:
+        yaml.dump(results, f, default_flow_style=False)
+    
+    logger = get_logger(__name__)
+    logger.info(f"💾 Results saved to: {results_file}")
+
+
+def load_dataset(config):
+    """Load dataset based on experiment configuration."""
+    # Create a simplified config object that works with DatasetManager
+    from core.config import ConfigManager
+    config_manager = ConfigManager()
+    experiment_config = config_manager.load_config("config.yaml")
+    
+    dataset_manager = DatasetManager(experiment_config)
+    
+    if config['experiment']['type'] == 'single_domain':
+        return dataset_manager.load_single_domain_dataset()
+    else:
+        return dataset_manager.load_cross_domain_datasets()
+
+
+def load_ckpt(checkpoint_path, model, device='cpu', strict=True):
+    """Load model checkpoint."""
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
+    
+    if 'model_state_dict' in checkpoint:
+        state_dict = checkpoint['model_state_dict']
+    else:
+        state_dict = checkpoint
+    
+    model.load_state_dict(state_dict, strict=strict)
+    logger = get_logger(__name__)
+    logger.info(f"✅ Loaded checkpoint from {checkpoint_path}")
+
+
+class EarlyStopping:
+    """Early stopping utility."""
+    
+    def __init__(self, patience=10, min_delta=0.0, mode='max'):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.mode = mode
+        self.best_score = None
+        self.counter = 0
+        
+    def __call__(self, score):
+        if self.best_score is None:
+            self.best_score = score
+            return False
+        
+        if self.mode == 'max':
+            improved = score > self.best_score + self.min_delta
+        else:
+            improved = score < self.best_score - self.min_delta
+        
+        if improved:
+            self.best_score = score
+            self.counter = 0
+            return False
+        else:
+            self.counter += 1
+            return self.counter >= self.patience
+
+
 def train_on_target_data(config, data, dataset_info, experiment_type, svd_reducer=None):
     """
     Core prompt tuning logic with SVD-aligned features.
@@ -127,15 +330,17 @@ def train_on_target_data(config, data, dataset_info, experiment_type, svd_reduce
     Returns:
         Training results
     """
-    device = get_device(config['experiment']['device'])
+    device = device_manager.get_device(config['experiment']['device'])
     data = data.to(device)
     
     # Log SVD information
-    if svd_reducer and dataset_info['svd_applied']:
+    if svd_reducer and dataset_info.svd_applied:
         logging.info(f"🔧 Prompt tuning with SVD-aligned features:")
-        logging.info(f"   Original target dimension: {dataset_info['original_num_features']}")
-        logging.info(f"   Aligned dimension: {dataset_info['num_features']}")
-        logging.info(f"   SVD explained variance: {dataset_info['svd_info']['explained_variance_ratio']:.4f}")
+        logging.info(f"   Original target dimension: {dataset_info.original_num_features}")
+        logging.info(f"   Aligned dimension: {dataset_info.num_features}")
+        svd_info = getattr(dataset_info, 'svd_info', None)
+        if svd_info:
+            logging.info(f"   SVD explained variance: {svd_info['explained_variance_ratio']:.4f}")
     
     # Load pretrained encoder (frozen) - dimensions should now match perfectly!
     if experiment_type == 'cross_domain':
@@ -149,11 +354,11 @@ def train_on_target_data(config, data, dataset_info, experiment_type, svd_reduce
     if Path(checkpoint_path).exists():
         checkpoint = torch.load(checkpoint_path, map_location='cpu', weights_only=False)
         checkpoint_dataset_info = checkpoint.get('dataset_info', {})
-        expected_input_dim = checkpoint_dataset_info.get('num_features', dataset_info['num_features'])
+        expected_input_dim = checkpoint_dataset_info.get('num_features', dataset_info.num_features)
         
-        if expected_input_dim != dataset_info['num_features']:
+        if expected_input_dim != dataset_info.num_features:
             raise ValueError(f"❌ Dimension mismatch after SVD! "
-                           f"Expected {expected_input_dim}, got {dataset_info['num_features']}. "
+                           f"Expected {expected_input_dim}, got {dataset_info.num_features}. "
                            f"Check SVD alignment.")
         
         logging.info(f"✅ Dimension verification passed: {expected_input_dim}D")
@@ -161,7 +366,7 @@ def train_on_target_data(config, data, dataset_info, experiment_type, svd_reduce
     # Create encoder with aligned dimension
     encoder = create_model(
         model_type=config['model']['type'],
-        input_dim=dataset_info['num_features'],  # SVD-aligned dimension
+        input_dim=dataset_info.num_features,  # SVD-aligned dimension
         hidden_dim=config['model']['hidden_dim'],
         num_layers=config['model']['num_layers'],
         dropout=config['model']['dropout']
@@ -179,22 +384,13 @@ def train_on_target_data(config, data, dataset_info, experiment_type, svd_reduce
     logging.info("✅ Loaded pretrained encoder (frozen) with perfect dimension alignment")
     print_model_info(encoder, "Encoder")
 
-    # Initialize prompt (dimensions already aligned)
-    # prompt = GPFPrompt(
-    #     input_dim=dataset_info['num_features'],  # SVD-aligned dimension
-    #     p_num=config['prompt']['num_prompts']
-    # ).to(device)
-    
-    prompt = ResidualMLPPrompt(
-        input_dim=dataset_info['num_features'],
-        hidden_dim=64,
-        num_layers=2,
-    ).to(device)
+    # Initialize prompt based on configuration
+    prompt = create_prompt(config, dataset_info.num_features).to(device)
     
     # Initialize classifier
     classifier = Classifier(
         input_dim=config['model']['hidden_dim'],
-        num_classes=dataset_info['num_classes']
+        num_classes=dataset_info.num_classes
     ).to(device)
     
     print_model_info(prompt, "Prompt")
@@ -217,8 +413,19 @@ def train_on_target_data(config, data, dataset_info, experiment_type, svd_reduce
             mode='max'
         )
 
-    # Initialize target-centric loss
-    loss_fn = TargetCentricLoss(config).to(device)
+    # Initialize target-centric loss with flattened config for compatibility
+    loss_config = {
+        'target_centric_enable': config['target_centric']['enable'],
+        'target_centric_beta': config['target_centric']['regularization']['beta'],
+        'target_centric_anchor_type': config['target_centric']['regularization']['anchor']['type'],
+        'target_centric_anchor_num_anchors': config['target_centric']['regularization']['anchor']['num_anchors'],
+        'target_centric_anchor_num_components': config['target_centric']['regularization']['anchor']['num_components'],
+        'target_centric_anchor_use_sklearn_gmm': config['target_centric']['regularization']['anchor']['use_sklearn_gmm'],
+        'target_centric_mapper_type': config['target_centric']['regularization']['mapper']['type'],
+        'target_centric_divergence_type': config['target_centric']['regularization']['divergence']['type'],
+        'target_centric_divergence_sigma': config['target_centric']['regularization']['divergence']['params']['sigma'],
+    }
+    loss_fn = TargetCentricLoss(loss_config).to(device)
     
     # Initialize regularizer if target-centric is enabled
     if config['target_centric']['enable']:
@@ -364,12 +571,12 @@ def train_on_target_data(config, data, dataset_info, experiment_type, svd_reduce
     # Final results
     final_results = {
         'experiment_type': experiment_type,
-        'dataset': dataset_info['dataset_name'],
+        'dataset': dataset_info.name,
         'target_centric_enabled': config['target_centric']['enable'],
-        'svd_applied': dataset_info['svd_applied'],
-        'svd_info': dataset_info.get('svd_info'),
-        'original_target_dim': dataset_info.get('original_num_features'),
-        'aligned_dim': dataset_info['num_features'],
+        'svd_applied': dataset_info.svd_applied,
+        'svd_info': getattr(dataset_info, 'svd_info', None),
+        'original_target_dim': dataset_info.original_num_features,
+        'aligned_dim': dataset_info.num_features,
         'best_val_score': best_val_score,
         'test_metrics': test_metrics,
         'training_history': results,
@@ -382,9 +589,11 @@ def train_on_target_data(config, data, dataset_info, experiment_type, svd_reduce
     logging.info("="*50)
     for metric, value in test_metrics.items():
         logging.info(f"{metric.upper():<12}: {value:.4f}")
-    if dataset_info['svd_applied']:
-        logging.info(f"SVD DIM REDUCTION: {dataset_info.get('original_num_features')}D → {dataset_info['num_features']}D")
-        logging.info(f"EXPLAINED VARIANCE: {dataset_info['svd_info']['explained_variance_ratio']:.4f}")
+    if dataset_info.svd_applied:
+        logging.info(f"SVD DIM REDUCTION: {dataset_info.original_num_features}D → {dataset_info.num_features}D")
+        svd_info = getattr(dataset_info, 'svd_info', None)
+        if svd_info:
+            logging.info(f"EXPLAINED VARIANCE: {svd_info['explained_variance_ratio']:.4f}")
     logging.info("="*50)
     
     return final_results
@@ -395,9 +604,10 @@ def main():
     Main prompt tuning function.
     """
     # Load configuration
-    config = load_config("config.yaml")
+    config_path = os.environ.get('CONFIG_PATH', 'config.yaml')
+    config = load_config(config_path)
     set_seed(config['experiment']['seed'])
-    device = get_device(config['experiment']['device'])
+    device = device_manager.get_device(config['experiment']['device'])
     setup_logging(config['experiment']['log_level'])
     log_experiment_info(config)
     
