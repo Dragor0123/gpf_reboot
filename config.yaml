@@ -3,8 +3,8 @@
 # Experiment Type & Cross-Domain Settings
 experiment:
   type: "cross_domain"  # "single_domain" or "cross_domain"
-  source_dataset: "citeseer"
-  target_dataset: "computers"
+  source_dataset: "photo"
+  target_dataset: "pubmed"
   seed: 42
   device: auto
   log_level: INFO
@@ -73,7 +73,7 @@ prompt_tuning:
 
 # Prompt Configuration
 prompt:
-  type: "residual_mlp"  # "gpf", "residual_mlp", "linear"
+  type: "linear"  # "gpf", "residual_mlp", "linear"
   
   # GPFPrompt parameters (when type: "gpf")
   gpf:
@@ -90,9 +90,9 @@ prompt:
     out_channels: null  # null means same as input_dim (in_channels)
 
 target_centric:
-  enable: false
+  enable: true
   regularization:
-    beta: 0.0 #0.1
+    beta: 0.1 #0.1
     anchor:
       type: "mog"
       num_components: 8      # Gaussian component 수 (6개?)

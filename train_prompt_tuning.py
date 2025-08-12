@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 from sklearn.metrics import f1_score, roc_auc_score, accuracy_score
 import numpy as np
+import argparse
 
 # Import from refactored modules
 from core.config import ConfigManager
@@ -603,9 +604,26 @@ def main():
     """
     Main prompt tuning function.
     """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Graph Prompt Tuning')
+    parser.add_argument('--source_dataset', type=str, help='Source dataset name')
+    parser.add_argument('--target_dataset', type=str, help='Target dataset name')
+    parser.add_argument('--seed', type=int, help='Random seed')
+    parser.add_argument('--config', type=str, default='config.yaml', help='Config file path')
+    args = parser.parse_args()
+    
     # Load configuration
-    config_path = os.environ.get('CONFIG_PATH', 'config.yaml')
+    config_path = args.config
     config = load_config(config_path)
+    
+    # Override config with command line arguments
+    if args.source_dataset:
+        config['experiment']['source_dataset'] = args.source_dataset
+    if args.target_dataset:
+        config['experiment']['target_dataset'] = args.target_dataset
+    if args.seed:
+        config['experiment']['seed'] = args.seed
+    
     set_seed(config['experiment']['seed'])
     device = device_manager.get_device(config['experiment']['device'])
     setup_logging(config['experiment']['log_level'])
