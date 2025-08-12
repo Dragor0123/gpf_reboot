@@ -3,8 +3,8 @@
 # Experiment Type & Cross-Domain Settings
 experiment:
   type: "cross_domain"  # "single_domain" or "cross_domain"
-  source_dataset: "photo"
-  target_dataset: "pubmed"
+  source_dataset: "cora"
+  target_dataset: "computers"
   seed: 42
   device: auto
   log_level: INFO
@@ -73,7 +73,7 @@ prompt_tuning:
 
 # Prompt Configuration
 prompt:
-  type: "linear"  # "gpf", "residual_mlp", "linear"
+  type: "residual_mlp"  # "gpf", "residual_mlp", "linear"
   
   # GPFPrompt parameters (when type: "gpf")
   gpf:
@@ -94,12 +94,25 @@ target_centric:
   regularization:
     beta: 0.1 #0.1
     anchor:
-      type: "mog"
+      type: "gradient_optimized"  # "gaussian", "mog", "gradient_optimized"
+      num_anchors: 1000           # Total number of anchors to generate
+      
+      # MoG-specific parameters (when type: "mog")
       num_components: 8      # Gaussian component 수 (6개?)
-      num_anchors: 1000       # 총 anchor 수
       use_sklearn_gmm: true  # true면 full GMM, false면 simplified
+      
+      # Gradient optimization parameters (when type: "gradient_optimized")
+      optimization:
+        learning_rate: 0.01      # Learning rate for gradient ascent
+        num_iterations: 100      # Number of optimization iterations
+        regularization_lambda: 0.1  # Regularization strength
+        objectives:
+          high_norm: 0.3         # Encourage strong activations
+          diversity: 0.4         # Maximize embedding diversity
+          task_alignment: 0.3    # Align with downstream task
+          graph_homophily: 0.0   # Preserve graph structure (0.0 = disabled)
     mapper:
-      type: "identity"       # MoG는 이미 latent space에서 생성
+      type: "identity"       # MoG/gradient는 이미 latent space에서 생성
     divergence:
       type: "mmd"
       params:

@@ -1,160 +1,223 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+```markdown
+# CLAUDE.md - Strategy 1 Implementation Guide
 
 ## Project Overview
+Implement **Strategy 1: Gradient-Based Optimization** for source-free reference distribution generation in graph neural networks. The goal is to create an ideal reference distribution by optimizing input features to maximize encoder output quality, without accessing source domain data.
 
-This is a modern, refactored implementation of Graph Prompt Feature (GPF) for cross-domain graph neural network transfer learning. The project focuses on learning transferable representations across different graph datasets using contrastive pretraining, SVD feature alignment, and target-centric prior modeling.
+## Implementation Strategy
 
-## Key Commands
+### Phase 1: Core Infrastructure Setup
 
-### Environment Setup
-```bash
-pip install -r requirements.txt
+#### 1.1 Create Gradient-Based Optimizer Module
+```python
+# File: core/gradient_optimizer.py
+class GradientBasedReferenceGenerator:
+    def __init__(self, encoder, target_data, device):
+        self.encoder = encoder
+        self.target_data = target_data
+        self.device = device
+    
+    def generate_reference_distribution(self, num_anchors=1000):
+        # Main entry point for reference distribution generation
+        pass
+    
+    def optimize_input_for_encoder_output(self, objectives, num_iterations=100):
+        # Core optimization loop using gradient ascent
+        pass
 ```
 
-### Running Experiments
-```bash
-# Single cross-domain experiment (cora → computers)
-python train_pretrain.py    # Pretrain encoder on source dataset
-python train_fine_tuning.py # Fine-tune on target dataset
-
-# Comprehensive evaluation across all dataset pairs
-python run_experiments.py   # Runs 20 cross-domain combinations with baseline vs target-centric comparison
-
-# Debug and data verification
-python debug_data_check.py     # Verify dataset loading and SVD alignment
-python debug_step_by_step.py   # Step-by-step debugging of the pipeline
+#### 1.2 Define Objective Functions
+```python
+# File: core/objectives.py
+class EncoderObjectives:
+    @staticmethod
+    def high_norm(embeddings):
+        # Encourage strong activations
+        pass
+    
+    @staticmethod
+    def feature_diversity(embeddings):
+        # Maximize embedding diversity
+        pass
+    
+    @staticmethod
+    def task_alignment(embeddings, labels=None):
+        # Align with downstream task if labels available
+        pass
+    
+    @staticmethod
+    def graph_homophily(embeddings, edge_index):
+        # Preserve graph structural properties
+        pass
 ```
 
-### Configuration
-All experiments are controlled via `config.yaml` with structured validation:
-- `experiment.type`: "single_domain" or "cross_domain" 
-- `experiment.source_dataset` / `target_dataset`: Dataset names
-- `feature_reduction.enable`: SVD dimensionality reduction (recommended: true)
-- `target_centric.enable`: Enable target-centric prior modeling
+### Phase 2: Core Implementation
 
-## Refactored Architecture Overview
+#### 2.1 Implement Optimization Engine
+- Create learnable input features that are optimized via gradient ascent
+- Implement multi-objective optimization with weighted combination
+- Add regularization to prevent divergence from original target distribution
+- Include convergence criteria and early stopping
 
-### Modular Design
-The codebase has been completely refactored into a clean, modular architecture:
+#### 2.2 Graph-Specific Objectives
+- Implement homophily preservation objective
+- Add structural diversity metrics
+- Create message passing quality assessment
+- Design node centrality preservation objective
 
-```
-core/              # Core utilities and configuration
-├── config.py      # Structured configuration management
-├── device.py      # Device management and optimization
-├── logging.py     # Enhanced logging with colors and experiment tracking
-├── reproducibility.py  # Comprehensive reproducibility utilities
-└── svd_reducer.py # Robust SVD feature reduction
-
-models/            # Graph neural network architectures
-├── base.py        # Abstract base classes and interfaces
-└── architectures.py  # Concrete GNN implementations
-
-datasets/          # Dataset loading and management
-├── base.py        # Abstract dataset interfaces
-├── loaders.py     # Concrete dataset loaders
-└── manager.py     # High-level dataset management with SVD integration
-
-training/          # Training components
-├── losses.py      # Loss functions and target-centric losses
-├── regularizers.py # Target-centric regularization strategies
-├── augmentation.py # Graph data augmentation
-└── trainer.py     # Training loop abstractions
+#### 2.3 Regularization Mechanisms
+```python
+def regularized_optimization(optimized_features, original_features, lambda_reg=0.1):
+    # Prevent optimized features from deviating too far from originals
+    distance_penalty = torch.norm(optimized_features - original_features, p=2)
+    return base_loss - lambda_reg * distance_penalty
 ```
 
-### Core Components
+### Phase 3: Integration with Existing Codebase
 
-**Structured Configuration** (`core/config.py`):
-- Type-safe configuration with dataclasses (`ExperimentConfig`)
-- Automatic validation and default value handling
-- Support for both YAML and programmatic configuration
-- Backward compatibility with existing config files
+#### 3.1 Replace MoG Anchor Generation
+- Locate current MoG anchor generation in `anchor_factory.py`
+- Replace `generate_mog_anchors()` function with gradient-based approach
+- Maintain same interface: `generate_gradient_optimized_anchors(embeddings, num_anchors)`
 
-**Enhanced Dataset Management** (`datasets/`):
-- Abstract base classes for extensible dataset loading
-- Automatic SVD alignment for cross-domain compatibility
-- Comprehensive dataset statistics and validation
-- Support for custom datasets and transforms
+#### 3.2 Update Training Pipeline
+- Modify `train_prompt_tuning.py` to use new anchor generation method
+- Update configuration system to support gradient optimization parameters
+- Add new hyperparameters: learning rate, optimization steps, objective weights
 
-**Robust SVD Feature Alignment** (`core/svd_reducer.py`):
-- Improved error handling and dimension mismatch resolution
-- Comprehensive serialization and caching
-- Reconstruction error analysis and inverse transforms
-- Thread-safe operation with proper state management
+#### 3.3 Configuration Updates
+```yaml
+# Add to config.yaml
+target_centric:
+  regularization:
+    anchor:
+      type: "gradient_optimized"  # New anchor type
+      num_anchors: 1000
+      optimization:
+        learning_rate: 0.01
+        num_iterations: 100
+        objectives:
+          high_norm: 0.3
+          diversity: 0.4
+          task_alignment: 0.3
+        regularization_lambda: 0.1
+```
 
-**Modern GNN Architectures** (`models/`):
-- Abstract `GraphEncoder` base class for consistent interfaces
-- Enhanced implementations of GIN, GCN, GAT, SAGE, GCNII
-- Flexible projection heads and classifiers
-- Comprehensive model introspection and logging
+### Phase 4: Objective Function Design
 
-**Advanced Training Components** (`training/`):
-- Modular loss functions with proper abstractions
-- Sophisticated target-centric regularization strategies
-- Graph augmentation pipeline with multiple strategies
-- Abstract trainer classes for different training phases
+#### 4.1 Primary Objectives Implementation
+1. **Activation Strength**: `torch.norm(embeddings, dim=1).mean()`
+2. **Feature Diversity**: Pairwise distance maximization
+3. **Task Relevance**: Classification loss if labels available
+4. **Structural Preservation**: Graph homophily maintenance
 
-### Key Design Patterns
+#### 4.2 Multi-Objective Optimization
+- Implement weighted combination of objectives
+- Add hyperparameter tuning for objective weights
+- Create ablation study framework for objective contribution analysis
 
-**Factory Pattern**: Consistent factory functions for models, datasets, and training components enable easy experimentation and extension.
+### Phase 5: Experimental Validation
 
-**Strategy Pattern**: Pluggable strategies for anchoring, regularization, and augmentation allow flexible algorithm composition.
+#### 5.1 Comparison Framework
+- Compare against current MoG approach
+- Implement baseline: random anchor generation
+- Add comparison with Gaussian prior anchors
 
-**Template Method**: Abstract base classes define training workflows while allowing customization of specific steps.
+#### 5.2 Ablation Studies
+- Individual objective contribution analysis
+- Regularization strength impact study
+- Optimization iteration count sensitivity analysis
 
-**Configuration-Driven Design**: Structured configuration management eliminates magic numbers and enables reproducible experiments.
+#### 5.3 Performance Metrics
+- Downstream task accuracy comparison
+- MMD loss convergence analysis
+- Training stability metrics
+- Computational cost measurement
 
-## Important Implementation Details
+## Implementation Priority
 
-### Enhanced Error Handling
-- Comprehensive validation at all levels (configuration, data, models)
-- Graceful degradation with informative error messages
-- Automatic fallback strategies for common failure modes
-- Detailed logging for debugging and monitoring
+### High Priority (Implement First)
+1. `GradientBasedReferenceGenerator` class
+2. Basic objective functions (high_norm, diversity)
+3. Simple optimization loop with gradient ascent
+4. Integration point in `anchor_factory.py`
 
-### Improved Reproducibility
-- Comprehensive seed management across all random sources
-- Deterministic CUDA operations with performance trade-offs
-- Random state capture and restoration utilities
-- Verification tools to ensure reproducible results
+### Medium Priority
+1. Graph-specific objectives (homophily, structural)
+2. Multi-objective optimization framework
+3. Regularization mechanisms
+4. Configuration system updates
 
-### Cross-Domain Robustness
-- Automatic dimension alignment with multiple fallback strategies
-- Comprehensive compatibility checking between datasets
-- Robust SVD transformation with error recovery
-- Extensive validation and logging throughout the pipeline
+### Low Priority (Polish Phase)
+1. Advanced optimization techniques (Adam, momentum)
+2. Adaptive objective weighting
+3. Extensive ablation study framework
+4. Performance profiling and optimization
 
-### Advanced Logging and Monitoring
-- Colored console output with structured formatting
-- Experiment-specific log files with detailed tracking
-- Progress monitoring with phase-based organization
-- Performance metrics and resource utilization tracking
+## Key Files to Modify
 
-## Development Guidelines
+### Core Implementation
+- `core/gradient_optimizer.py` (NEW)
+- `core/objectives.py` (NEW)
+- `anchor_factory.py` (MODIFY)
 
-### Adding New Models
-1. Inherit from `GraphEncoder` base class in `models/base.py`
-2. Implement required abstract methods with proper type hints
-3. Add model to factory function in `models/architectures.py`
-4. Update model requirements dictionary for configuration validation
+### Training Pipeline
+- `train_prompt_tuning.py` (MODIFY)
+- `config.yaml` (MODIFY)
 
-### Adding New Datasets
-1. Create loader class inheriting from `BaseDatasetLoader`
-2. Implement `load_raw_dataset()` and `get_supported_datasets()`
-3. Register with `DatasetManager` for integrated pipeline support
-4. Add comprehensive metadata and statistics computation
+### Loss Functions
+- `training/losses.py` (MINOR MODIFY)
+- `training/regularizers.py` (MINOR MODIFY)
 
-### Adding New Training Components
-1. Use appropriate abstract base classes from `training/`
-2. Follow factory pattern conventions for extensibility
-3. Implement proper configuration integration
-4. Add comprehensive logging and error handling
+## Success Criteria
 
-### Configuration Management
-- Use structured `ExperimentConfig` for type safety
-- Add validation logic to `ConfigManager._validate_config()`
-- Maintain backward compatibility with existing YAML files
-- Document all new configuration parameters
+### Functional Success
+- [ ] Gradient optimization generates stable anchor distributions
+- [ ] Integration with existing training pipeline works seamlessly
+- [ ] No performance degradation compared to current MoG approach
 
-The refactored architecture provides a solid foundation for advanced graph neural network research with emphasis on maintainability, extensibility, and reproducibility.
+### Performance Success
+- [ ] At least 2% improvement in downstream task accuracy
+- [ ] Faster convergence in MMD loss
+- [ ] Computational overhead < 20% of current approach
+
+### Research Success
+- [ ] Clear ablation study showing objective contribution
+- [ ] Demonstrated source-free capability
+- [ ] Reproducible results across different graph domains
+
+## Implementation Notes
+
+### Critical Considerations
+1. **Gradient Flow**: Ensure gradients flow properly through frozen encoder
+2. **Numerical Stability**: Add gradient clipping and learning rate scheduling
+3. **Memory Efficiency**: Implement batch processing for large graphs
+4. **Reproducibility**: Fix random seeds and document all hyperparameters
+
+### Potential Pitfalls
+1. **Optimization Instability**: May need careful learning rate tuning
+2. **Local Minima**: Consider multiple random initializations
+3. **Overfitting**: Balance between optimization and regularization
+4. **Computational Cost**: Monitor and optimize if too expensive
+
+## Testing Strategy
+
+### Unit Tests
+- Individual objective function correctness
+- Optimization convergence on toy examples
+- Gradient computation accuracy
+
+### Integration Tests
+- End-to-end pipeline with gradient-optimized anchors
+- Comparison with existing MoG approach
+- Cross-domain transfer performance
+
+### Performance Tests
+- Large-scale graph handling
+- Memory usage profiling
+- Training time comparison
+
+---
+
+**Implementation Goal**: Replace current MoG-based anchor generation with gradient-optimized approach that leverages pretrained encoder knowledge to create better reference distributions for source-free domain adaptation.
+```

@@ -16,7 +16,7 @@ from models import create_model, Classifier, print_model_info
 from datasets import DatasetManager, validate_cross_domain_compatibility
 from prompts.prompt_function import GPFPrompt, ResidualMLPPrompt, LinearPrompt
 from training.losses import TargetCentricLoss
-from anchor_factory import generate_gaussian_anchors, generate_mog_anchors, generate_mog_anchors_simple
+from anchor_factory import generate_gaussian_anchors, generate_mog_anchors, generate_mog_anchors_simple, generate_gradient_optimized_anchors
 import yaml
 import datetime
 import os
@@ -457,6 +457,44 @@ def train_on_target_data(config, data, dataset_info, experiment_type, svd_reduce
             
             loss_fn.regularizer.initialize_fixed_anchors(anchors)
             logging.info(f"🎯 MoG anchors initialized: {anchors.shape}")
+        elif anchor_type == 'gradient_optimized':
+            # Strategy 1: Gradient-Based Optimization
+            num_anchors = anchor_cfg.get('num_anchors', 1000)
+            optimization_cfg = anchor_cfg.get('optimization', {})
+            
+            num_iterations = optimization_cfg.get('num_iterations', 100)
+            learning_rate = optimization_cfg.get('learning_rate', 0.01)
+            regularization_lambda = optimization_cfg.get('regularization_lambda', 0.1)
+            
+            # Objective weights
+            objectives_cfg = optimization_cfg.get('objectives', {})
+            objective_weights = {
+                'high_norm': objectives_cfg.get('high_norm', 0.3),
+                'diversity': objectives_cfg.get('diversity', 0.4),
+                'task_alignment': objectives_cfg.get('task_alignment', 0.3),
+                'graph_homophily': objectives_cfg.get('graph_homophily', 0.0)
+            }
+            
+            logging.info("🚀 Using Gradient-Based Optimization (Strategy 1)")
+            logging.info(f"   Num anchors: {num_anchors}")
+            logging.info(f"   Iterations: {num_iterations}")
+            logging.info(f"   Learning rate: {learning_rate}")
+            logging.info(f"   Objective weights: {objective_weights}")
+            
+            # Generate gradient-optimized anchors
+            anchors = generate_gradient_optimized_anchors(
+                encoder=encoder,
+                target_data=data.x,
+                num_anchors=num_anchors,
+                num_iterations=num_iterations,
+                learning_rate=learning_rate,
+                objective_weights=objective_weights,
+                regularization_lambda=regularization_lambda,
+                edge_index=data.edge_index
+            )
+            
+            loss_fn.regularizer.initialize_fixed_anchors(anchors)
+            logging.info(f"🎯 Gradient-optimized anchors initialized: {anchors.shape}")
         else:
             # 기존 방식: feature-based anchor 선택 + mapper
             target_features = data.x

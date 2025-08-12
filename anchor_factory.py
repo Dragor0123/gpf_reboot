@@ -137,3 +137,63 @@ def generate_mog_anchors_simple(embeddings: torch.Tensor,
     
     return torch.tensor(all_anchors[:num_anchors], 
                        dtype=torch.float32, device=embeddings.device)
+
+
+def generate_gradient_optimized_anchors(encoder: torch.nn.Module,
+                                      target_data: torch.Tensor,
+                                      num_anchors: int = 1000,
+                                      num_iterations: int = 100,
+                                      learning_rate: float = 0.01,
+                                      objective_weights: dict = None,
+                                      regularization_lambda: float = 0.1,
+                                      edge_index: torch.Tensor = None):
+    """
+    Generate anchors using gradient-based optimization (Strategy 1).
+    
+    This function implements gradient-based optimization to create ideal reference
+    distributions by optimizing input features to maximize encoder output quality.
+    
+    Args:
+        encoder: Pretrained frozen encoder
+        target_data: Target domain data for optimization context
+        num_anchors: Number of anchor points to generate
+        num_iterations: Number of optimization iterations
+        learning_rate: Learning rate for gradient ascent
+        objective_weights: Weights for different objectives
+        regularization_lambda: Regularization strength
+        edge_index: Graph edge indices for structural objectives
+        
+    Returns:
+        Generated anchor vectors [num_anchors, D]
+    """
+    from core.gradient_optimizer import GradientBasedReferenceGenerator
+    
+    if objective_weights is None:
+        objective_weights = {
+            'high_norm': 0.3,
+            'diversity': 0.4,
+            'task_alignment': 0.3
+        }
+    
+    # Initialize gradient-based generator
+    generator = GradientBasedReferenceGenerator(
+        encoder=encoder,
+        target_data=target_data,
+        device=target_data.device
+    )
+    
+    # Generate optimized anchors
+    anchors = generator.generate_reference_distribution(
+        num_anchors=num_anchors,
+        num_iterations=num_iterations,
+        learning_rate=learning_rate,
+        objective_weights=objective_weights,
+        regularization_lambda=regularization_lambda,
+        edge_index=edge_index
+    )
+    
+    logging.info(f"🎯 Generated {num_anchors} gradient-optimized anchors")
+    logging.info(f"   Anchor shape: {anchors.shape}")
+    logging.info(f"   Anchor mean norm: {torch.norm(anchors, dim=1).mean():.4f}")
+    
+    return anchors
