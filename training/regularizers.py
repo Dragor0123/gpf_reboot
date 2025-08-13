@@ -75,6 +75,97 @@ class HighDegreeAnchorSelector(AnchorSelector):
         return target_features[top_indices].clone()
 
 
+class GradientOptimizedAnchorSelector(AnchorSelector):
+    """Gradient-based optimization for anchor generation."""
+    
+    def __init__(self, learning_rate: float = 0.01, num_iterations: int = 100, 
+                 regularization_lambda: float = 0.1, objective_weights: Optional[Dict[str, float]] = None):
+        self.learning_rate = learning_rate
+        self.num_iterations = num_iterations
+        self.regularization_lambda = regularization_lambda
+        self.objective_weights = objective_weights or {
+            'high_norm': 0.3,
+            'diversity': 0.4, 
+            'task_alignment': 0.3
+        }
+    
+    def select_anchors(self, target_features: torch.Tensor, 
+                      edge_index: Optional[torch.Tensor] = None,
+                      num_anchors: int = 100) -> torch.Tensor:
+        """Generate anchors using gradient-based optimization."""
+        device = target_features.device
+        feature_dim = target_features.size(1)
+        num_anchors = min(num_anchors, target_features.size(0))
+        
+        # Initialize with random subset of target features
+        initial_indices = torch.randperm(target_features.size(0))[:num_anchors]
+        initial_features = target_features[initial_indices].clone()
+        
+        # Create optimizable features
+        optimized_features = initial_features.clone().requires_grad_(True)
+        optimizer = torch.optim.Adam([optimized_features], lr=self.learning_rate)
+        
+        # Optimization loop
+        for iteration in range(self.num_iterations):
+            optimizer.zero_grad()
+            
+            # Compute objectives
+            loss = self._compute_multi_objective(optimized_features, initial_features, edge_index)
+            
+            # Backward pass
+            loss.backward()
+            optimizer.step()
+            
+            # Log progress
+            if iteration % 20 == 0:
+                logger.debug(f"Gradient optimization iteration {iteration}: loss = {loss.item():.4f}")
+        
+        return optimized_features.detach()
+    
+    def _compute_multi_objective(self, features: torch.Tensor, original_features: torch.Tensor,
+                                edge_index: Optional[torch.Tensor] = None) -> torch.Tensor:
+        """Compute multi-objective loss for optimization."""
+        total_loss = 0.0
+        
+        # Objective 1: High norm (encourage strong activations)
+        if 'high_norm' in self.objective_weights:
+            high_norm_objective = -torch.norm(features, dim=1).mean()  # Negative for maximization
+            total_loss += self.objective_weights['high_norm'] * high_norm_objective
+        
+        # Objective 2: Feature diversity (maximize pairwise distances)
+        if 'diversity' in self.objective_weights:
+            diversity_objective = -self._compute_diversity(features)  # Negative for maximization
+            total_loss += self.objective_weights['diversity'] * diversity_objective
+        
+        # Objective 3: Task alignment (preserve target distribution characteristics)
+        if 'task_alignment' in self.objective_weights:
+            alignment_objective = self._compute_task_alignment(features, original_features)
+            total_loss += self.objective_weights['task_alignment'] * alignment_objective
+        
+        # Regularization: prevent features from deviating too far from originals
+        regularization = torch.norm(features - original_features, p=2)
+        total_loss += self.regularization_lambda * regularization
+        
+        return total_loss
+    
+    def _compute_diversity(self, features: torch.Tensor) -> torch.Tensor:
+        """Compute diversity as mean pairwise distance."""
+        pairwise_distances = torch.cdist(features, features, p=2)
+        # Exclude diagonal (self-distances)
+        mask = ~torch.eye(features.size(0), dtype=torch.bool, device=features.device)
+        return pairwise_distances[mask].mean()
+    
+    def _compute_task_alignment(self, features: torch.Tensor, original_features: torch.Tensor) -> torch.Tensor:
+        """Compute task alignment by preserving statistical properties."""
+        # Mean preservation
+        mean_diff = torch.norm(features.mean(dim=0) - original_features.mean(dim=0), p=2)
+        
+        # Variance preservation
+        var_diff = torch.norm(features.var(dim=0) - original_features.var(dim=0), p=2)
+        
+        return mean_diff + var_diff
+
+
 class IdentityAnchorMapper(AnchorMapper):
     """Identity mapping for pre-generated anchors."""
     
@@ -168,12 +259,16 @@ def create_anchor_selector(selector_type: str, **kwargs) -> AnchorSelector:
     selectors = {
         'random': RandomAnchorSelector,
         'high_degree': HighDegreeAnchorSelector,
+        'gradient_optimized': GradientOptimizedAnchorSelector,
     }
     
     if selector_type not in selectors:
         raise ValueError(f"Unknown anchor selector: {selector_type}")
     
-    return selectors[selector_type]()
+    if selector_type == 'gradient_optimized':
+        return selectors[selector_type](**kwargs)
+    else:
+        return selectors[selector_type]()
 
 
 def create_anchor_mapper(mapper_type: str, **kwargs) -> AnchorMapper:
@@ -221,7 +316,22 @@ class TargetCentricRegularizer(nn.Module):
             self.anchor_selector = None
             self.anchor_mapper = create_anchor_mapper('identity')
         else:
-            self.anchor_selector = create_anchor_selector(anchor_type)
+            # Pass optimization parameters for gradient_optimized anchor selector
+            optimization_config = anchor_config.get('optimization', {})
+            anchor_kwargs = {}
+            if anchor_type == 'gradient_optimized':
+                anchor_kwargs = {
+                    'learning_rate': optimization_config.get('learning_rate', 0.01),
+                    'num_iterations': optimization_config.get('num_iterations', 100),
+                    'regularization_lambda': optimization_config.get('regularization_lambda', 0.1),
+                    'objective_weights': optimization_config.get('objectives', {
+                        'high_norm': 0.3,
+                        'diversity': 0.4,
+                        'task_alignment': 0.3
+                    })
+                }
+            
+            self.anchor_selector = create_anchor_selector(anchor_type, **anchor_kwargs)
             self.anchor_mapper = create_anchor_mapper(
                 mapper_config.get('type', 'encoder')
             )

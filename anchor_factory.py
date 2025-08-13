@@ -183,7 +183,7 @@ def generate_gradient_optimized_anchors(encoder: torch.nn.Module,
     )
     
     # Generate optimized anchors
-    anchors = generator.generate_reference_distribution(
+    anchor_features = generator.generate_reference_distribution(
         num_anchors=num_anchors,
         num_iterations=num_iterations,
         learning_rate=learning_rate,
@@ -192,8 +192,19 @@ def generate_gradient_optimized_anchors(encoder: torch.nn.Module,
         edge_index=edge_index
     )
     
-    logging.info(f"🎯 Generated {num_anchors} gradient-optimized anchors")
-    logging.info(f"   Anchor shape: {anchors.shape}")
-    logging.info(f"   Anchor mean norm: {torch.norm(anchors, dim=1).mean():.4f}")
+    logging.info(f"🎯 Generated {num_anchors} gradient-optimized anchor features")
+    logging.info(f"   Anchor features shape: {anchor_features.shape}")
+    logging.info(f"   Anchor features mean norm: {torch.norm(anchor_features, dim=1).mean():.4f}")
     
-    return anchors
+    # Encode anchor features through the encoder to get anchor representations
+    with torch.no_grad():
+        encoder.eval()
+        device = anchor_features.device
+        empty_edge_index = torch.empty((2, 0), dtype=torch.long, device=device)
+        anchor_representations = encoder(anchor_features, empty_edge_index)
+    
+    logging.info(f"🎯 Encoded anchor representations")
+    logging.info(f"   Anchor representations shape: {anchor_representations.shape}")
+    logging.info(f"   Anchor representations mean norm: {torch.norm(anchor_representations, dim=1).mean():.4f}")
+    
+    return anchor_representations

@@ -130,23 +130,26 @@ class GradientBasedReferenceGenerator:
         for iteration in range(num_iterations):
             optimizer.zero_grad()
             
-            # Get encoder embeddings
-            if edge_index is not None:
-                # For graph data, create dummy edge_index if needed
-                embeddings = self.encoder(optimized_features, edge_index)
-            else:
-                # For node features only
-                embeddings = self.encoder(optimized_features, self._create_dummy_edge_index(len(optimized_features)))
+            # Get encoder embeddings for anchor features (use empty edge_index)
+            # Create empty edge_index since we're optimizing isolated anchor features
+            device = optimized_features.device
+            empty_edge_index = torch.empty((2, 0), dtype=torch.long, device=device)
+            embeddings = self.encoder(optimized_features, empty_edge_index)
             
             # Compute multi-objective loss
             total_objective = 0.0
             objective_details = {}
             
             for obj_name, obj_func, weight in objectives:
-                if obj_name == 'graph_homophily' and edge_index is None:
-                    continue  # Skip graph objectives if no edge_index
+                # Skip objectives with zero weight
+                if weight == 0.0:
+                    continue
                     
-                obj_value = obj_func(embeddings, optimized_features, edge_index)
+                # Skip graph objectives when using empty edge_index for anchor optimization
+                if obj_name == 'graph_homophily':
+                    continue  # Skip graph objectives during anchor optimization
+                    
+                obj_value = obj_func(embeddings, optimized_features, empty_edge_index)
                 total_objective += weight * obj_value
                 objective_details[obj_name] = obj_value.item()
             
