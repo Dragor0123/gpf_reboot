@@ -417,7 +417,7 @@ def train_on_target_data(config, data, dataset_info, experiment_type, svd_reduce
     # Initialize target-centric loss with flattened config for compatibility
     loss_config = {
         'target_centric_enable': config['target_centric']['enable'],
-        'target_centric_beta': config['target_centric']['regularization']['beta'],
+        'target_centric_beta': config['regularization']['weight'],
         'target_centric_anchor_type': config['target_centric']['regularization']['anchor']['type'],
         'target_centric_anchor_num_anchors': config['target_centric']['regularization']['anchor']['num_anchors'],
         'target_centric_anchor_num_components': config['target_centric']['regularization']['anchor']['num_components'],
@@ -425,6 +425,9 @@ def train_on_target_data(config, data, dataset_info, experiment_type, svd_reduce
         'target_centric_mapper_type': config['target_centric']['regularization']['mapper']['type'],
         'target_centric_divergence_type': config['target_centric']['regularization']['divergence']['type'],
         'target_centric_divergence_sigma': config['target_centric']['regularization']['divergence']['params']['sigma'],
+        # Add dynamic anchor and regularization config
+        'dynamic_anchor': config.get('dynamic_anchor', {}),
+        'regularization': config.get('regularization', {}),
     }
     loss_fn = TargetCentricLoss(loss_config).to(device)
     
