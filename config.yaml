@@ -89,13 +89,14 @@ prompt:
   linear:
     out_channels: null  # null means same as input_dim (in_channels)
 
+# Target-Centric Prior Modeling (Static Methods - Legacy)
 target_centric:
-  enable: true
+  enable: false  # Disabled when dynamic_anchor is enabled
   regularization:
-    beta: 0.1 #0.1
+    weight: 0.1
     anchor:
       type: "mog"
-      num_components: 8      # Gaussian component 수 (6개?)
+      num_components: 8      # Gaussian component 수
       num_anchors: 1000       # 총 anchor 수
       use_sklearn_gmm: true  # true면 full GMM, false면 simplified
     mapper:
@@ -104,6 +105,47 @@ target_centric:
       type: "mmd"
       params:
         sigma: 0.25
+
+# Dynamic Performance-Based Anchor Selection (Primary Method)
+dynamic_anchor:
+  enable: true
+  selection_ratio: 0.2          # Top 20% performing nodes as anchors
+  update_frequency: 10          # Update anchors every 10 epochs
+  soft_update_momentum: 0.9     # Momentum for soft anchor updates (0=hard, 1=no update)
+  
+  # Performance criteria for anchor selection
+  criteria:
+    loss_weight: 0.7           # Weight for individual node loss (primary criterion)
+    confidence_weight: 0.3     # Weight for prediction confidence (secondary criterion)
+  
+  # Quality tracking and monitoring
+  quality_tracking: true       # Enable anchor quality metrics tracking
+  
+  # Fallback mechanism for robustness
+  fallback:
+    enable: true
+    method: "mog"             # Fallback to MoG anchors if dynamic selection fails
+    conditions:
+      performance_drop: 0.05   # Trigger fallback if accuracy drops > 5%
+      anchor_diversity: 0.3    # Minimum diversity threshold for anchors
+      selection_instability: 0.5  # Minimum overlap ratio between consecutive selections
+
+# Legacy anchor methods (available but deprecated)
+mog_anchor:
+  enable: false               # Automatically disabled when dynamic_anchor is enabled
+  num_components: 8
+  num_anchors: 1000
+
+static_anchor:
+  enable: false               # Legacy static anchor selection
+  
+# Regularization settings (shared between methods)
+regularization:
+  weight: 0.1                 # Overall regularization strength (beta)
+  divergence:
+    type: "mmd"               # Distance metric: "mmd" or "wasserstein"
+    params:
+      sigma: 0.25             # MMD kernel bandwidth
 
 # Evaluation & Logging
 evaluation:

@@ -130,15 +130,24 @@ class InfoNCELoss(nn.Module):
 
 
 class TargetCentricLoss(nn.Module):
-    """Enhanced Target-Centric Prior Modeling Loss Function."""
+    """Enhanced Target-Centric Prior Modeling Loss Function with Dynamic Anchor Support."""
     
     def __init__(self, config: Dict[str, Any]):
         super().__init__()
         self.config = config
         self.target_centric_enabled = config.get('target_centric_enable', False)
+        self.dynamic_anchor_enabled = config.get('dynamic_anchor', {}).get('enable', False)
         
-        if self.target_centric_enabled:
-            # Import here to avoid circular imports
+        # Determine which regularizer to use
+        if self.dynamic_anchor_enabled:
+            # Use dynamic anchor regularizer
+            from .dynamic_regularizers import create_dynamic_anchor_regularizer
+            self.regularizer = create_dynamic_anchor_regularizer(config)
+            self.regularizer_type = 'dynamic'
+            logger.info("✅ Using DynamicAnchorRegularizer")
+            
+        elif self.target_centric_enabled:
+            # Use traditional static regularizer
             from .regularizers import TargetCentricRegularizer
             
             reg_config = {
@@ -161,12 +170,17 @@ class TargetCentricLoss(nn.Module):
             }
             
             self.regularizer = TargetCentricRegularizer(reg_config)
+            self.regularizer_type = 'static'
+            logger.info("✅ Using TargetCentricRegularizer (static)")
+            
         else:
             self.regularizer = None
+            self.regularizer_type = 'none'
+            logger.info("ℹ️ No regularization enabled")
     
     def forward(self, logits: torch.Tensor, labels: torch.Tensor, 
                 embeddings: torch.Tensor, mask: torch.Tensor,
-                edge_index: Optional[torch.Tensor] = None) -> Dict[str, torch.Tensor]:
+                edge_index: Optional[torch.Tensor] = None, epoch: int = 0) -> Dict[str, torch.Tensor]:
         """Compute total loss.
         
         Args:
@@ -175,6 +189,7 @@ class TargetCentricLoss(nn.Module):
             embeddings: Node embeddings [N, D]
             mask: Training mask [N]
             edge_index: Graph edges [2, E] (optional)
+            epoch: Current training epoch (for dynamic anchor updates)
             
         Returns:
             Dictionary with loss components
@@ -188,7 +203,16 @@ class TargetCentricLoss(nn.Module):
         }
         
         # Add regularization if enabled
-        if self.target_centric_enabled and self.regularizer is not None:
+        if self.regularizer is not None:
+            # Handle dynamic anchor updates if using dynamic regularizer
+            if self.regularizer_type == 'dynamic':
+                # Update anchors based on current performance
+                update_info = self.regularizer.update_anchors(
+                    embeddings, logits, labels, mask, epoch
+                )
+                losses['anchor_update_info'] = update_info
+            
+            # Compute regularization loss
             reg_loss = self.regularizer(embeddings)
             losses['reg_loss'] = reg_loss
             losses['total_loss'] = task_loss + reg_loss
@@ -208,8 +232,12 @@ class TargetCentricLoss(nn.Module):
             edge_index: Graph edges [2, E] (optional)
         """
         if self.regularizer is not None:
-            logger.info("Initializing Target-Centric regularizer with target features")
-            self.regularizer.initialize_anchors(target_features, encoder, edge_index)
+            if self.regularizer_type == 'dynamic':
+                logger.info("Dynamic anchor regularizer does not require initialization with target features")
+                # Dynamic regularizer will select anchors during training
+            else:
+                logger.info("Initializing Target-Centric regularizer with target features")
+                self.regularizer.initialize_anchors(target_features, encoder, edge_index)
     
     def initialize_regularizer_with_fixed_anchors(self, anchors: torch.Tensor):
         """Initialize regularizer with pre-generated anchors.
@@ -218,5 +246,28 @@ class TargetCentricLoss(nn.Module):
             anchors: Fixed anchor vectors [K, D]
         """
         if self.regularizer is not None:
-            logger.info(f"Initializing regularizer with {anchors.size(0)} fixed anchors")
-            self.regularizer.initialize_fixed_anchors(anchors)
+            if self.regularizer_type == 'dynamic':
+                logger.info(f"Setting fallback anchors for dynamic regularizer: {anchors.size(0)} anchors")
+                self.regularizer.set_fallback_anchors(anchors)
+            else:
+                logger.info(f"Initializing regularizer with {anchors.size(0)} fixed anchors")
+                self.regularizer.initialize_fixed_anchors(anchors)
+    
+    def get_regularizer_status(self) -> Dict[str, Any]:
+        """Get status information about the regularizer.
+        
+        Returns:
+            Dictionary with regularizer status and statistics
+        """
+        if self.regularizer is None:
+            return {'type': 'none', 'enabled': False}
+        
+        status = {
+            'type': self.regularizer_type,
+            'enabled': True
+        }
+        
+        if self.regularizer_type == 'dynamic':
+            status.update(self.regularizer.get_regularizer_status())
+        
+        return status

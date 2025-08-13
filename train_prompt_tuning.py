@@ -491,13 +491,14 @@ def train_on_target_data(config, data, dataset_info, experiment_type, svd_reduce
         h = encoder(prompted_x, edge_index)
         logits = classifier(h)
 
-        # Compute loss
+        # Compute loss (with epoch for dynamic anchor updates)
         loss_dict = loss_fn(
             logits=logits,
             labels=y,
             embeddings=h,
             mask=train_mask,
-            edge_index=edge_index
+            edge_index=edge_index,
+            epoch=epoch
         )
 
         total_loss = loss_dict['total_loss']
@@ -539,8 +540,19 @@ def train_on_target_data(config, data, dataset_info, experiment_type, svd_reduce
             log_msg = f"Epoch {epoch:03d} | "
             log_msg += f"Total Loss: {total_loss:.4f} | "
             log_msg += f"Task Loss: {task_loss:.4f} | "
-            if config['target_centric']['enable']:
+            
+            # Add regularization loss info
+            if config.get('dynamic_anchor', {}).get('enable', False) or config['target_centric']['enable']:
                 log_msg += f"Reg Loss: {reg_loss:.4f} | "
+                
+                # Add dynamic anchor specific info
+                if 'anchor_update_info' in loss_dict:
+                    update_info = loss_dict['anchor_update_info']
+                    if update_info['anchors_updated']:
+                        log_msg += f"Anchors Updated | "
+                    if update_info['using_fallback']:
+                        log_msg += f"Fallback Active | "
+            
             log_msg += f"Val Acc: {val_score:.4f}"
             logging.info(log_msg)
             
