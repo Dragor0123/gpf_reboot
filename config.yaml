@@ -3,9 +3,9 @@
 # Experiment Type & Cross-Domain Settings
 experiment:
   type: "cross_domain"  # "single_domain" or "cross_domain"
-  source_dataset: "cora"
-  target_dataset: "citeseer"
-  seed: 42
+  source_dataset: "citeseer"
+  target_dataset: "photo"
+  seed: 46
   device: auto
   log_level: INFO
   run_name: null  # auto-generated if null
@@ -73,7 +73,7 @@ prompt_tuning:
 
 # Prompt Configuration
 prompt:
-  type: "residual_mlp"  # "gpf", "residual_mlp", "linear"
+  type: "linear"  # "gpf", "residual_mlp", "linear"
   
   # GPFPrompt parameters (when type: "gpf")
   gpf:
@@ -109,14 +109,14 @@ target_centric:
 # Dynamic Performance-Based Anchor Selection (Primary Method)
 dynamic_anchor:
   enable: true
-  selection_ratio: 0.2          # Top 20% performing nodes as anchors
+  selection_ratio: 0.3          # Top 30% performing nodes as anchors
   update_frequency: 10          # Update anchors every 10 epochs
   soft_update_momentum: 0.9     # Momentum for soft anchor updates (0=hard, 1=no update)
   
   # Performance criteria for anchor selection
   criteria:
-    loss_weight: 0.7           # Weight for individual node loss (primary criterion)
-    confidence_weight: 0.3     # Weight for prediction confidence (secondary criterion)
+    loss_weight: 1.0           # Weight for individual node loss (primary criterion)
+    confidence_weight: 0.0     # Weight for prediction confidence (secondary criterion)
   
   # Quality tracking and monitoring
   quality_tracking: true       # Enable anchor quality metrics tracking
